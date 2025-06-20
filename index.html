@@ -4,149 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MindForge — Build Anything with AI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    * {
-      margin: 0; padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
-    body {
-      background: #0f0f0f;
-      color: #f0f0f0;
-      line-height: 1.6;
-    }
-
-    header.navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 40px;
-      background: #1a1a1a;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .navbar .logo {
-      font-size: 28px;
-      font-weight: bold;
-      color: #00fff0;
-    }
-    .navbar nav a {
-      color: #ccc;
-      margin-left: 20px;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s;
-    }
-    .navbar nav a:hover {
-      color: #00fff0;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 80px 60px;
-      background: linear-gradient(135deg, #111, #1e1e1e);
-    }
-    .hero-left h1 {
-      font-size: 48px;
-      color: #ffffff;
-    }
-    .hero-left p {
-      margin: 20px 0;
-      font-size: 18px;
-      color: #bbb;
-    }
-    #startBtn {
-      padding: 12px 28px;
-      background: #00fff0;
-      color: #000;
-      font-weight: bold;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .hero-right {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
-    .hero-right .card {
-      background: linear-gradient(145deg, #1c1c1c, #2b2b2b);
-      padding: 30px;
-      text-align: center;
-      border-radius: 12px;
-      border: 1px solid #333;
-      font-size: 18px;
-      font-weight: bold;
-      transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 255, 240, 0.08);
-    }
-    .hero-right .card:hover {
-      background: #333;
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(0, 255, 240, 0.2);
-    }
-
-    .build-section {
-      padding: 60px;
-      background: #181818;
-      text-align: center;
-    }
-    .build-section h2 {
-      font-size: 28px;
-      margin-bottom: 20px;
-    }
-    #promptInput {
-      width: 80%;
-      height: 120px;
-      padding: 15px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      background: #222;
-      color: #fff;
-      margin-bottom: 20px;
-      transition: 0.3s;
-    }
-    #promptInput:focus {
-      outline: none;
-      box-shadow: 0 0 10px #00fff0;
-      background: #1e1e1e;
-    }
-
-    #generateBtn {
-      padding: 12px 28px;
-      background: #00fff0;
-      color: #000;
-      font-weight: bold;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .preview-section {
-      padding: 60px;
-      background: #111;
-    }
-    .preview-section h3 {
-      margin: 20px 0;
-      color: #00fff0;
-    }
-    iframe#preview {
-      width: 100%;
-      height: 400px;
-      border: 1px solid #333;
-      border-radius: 10px;
-      background: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -184,55 +43,36 @@
   </section>
 
   <section id="previewArea" class="preview-section" style="display:none;">
-    <h3>✨ Preview</h3>
-    <iframe id="preview"></iframe>
-    <h3>🧠 AI Logs</h3>
-    <p style="color: #ccc;">Feature coming soon...</p>
+    <div class="toolbar">
+      <button id="toggleDevice">📱 Toggle Device</button>
+      <button id="fullscreenToggle">🔍 Fullscreen</button>
+      <button id="regenerateBtn">🔁 Regenerate</button>
+      <button id="downloadBtn">⬇️ Download</button>
+      <button id="themeToggle">🌓 Toggle Theme</button>
+    </div>
+
+    <div class="workspace">
+      <div class="preview-pane" id="previewPane">
+        <iframe id="previewFrame"></iframe>
+      </div>
+      <div class="code-pane">
+        <div class="code-tabs">
+          <button class="tab active" data-tab="html">HTML</button>
+          <button class="tab" data-tab="css">CSS</button>
+          <button class="tab" data-tab="js">JS</button>
+        </div>
+        <div class="code-content">
+          <pre class="language-html" id="htmlCode"></pre>
+          <pre class="language-css" id="cssCode" style="display:none;"></pre>
+          <pre class="language-js" id="jsCode" style="display:none;"></pre>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <script>
-    const startBtn = document.getElementById("startBtn");
-    const buildSection = document.getElementById("build");
-    const previewArea = document.getElementById("previewArea");
-    const generateBtn = document.getElementById("generateBtn");
-    const promptInput = document.getElementById("promptInput");
-    const cards = document.querySelectorAll(".hero-right .card");
-
-    let selectedType = "";
-
-    cards.forEach(card => {
-      card.addEventListener("click", () => {
-        selectedType = card.getAttribute("data-type");
-        buildSection.style.display = "block";
-        promptInput.placeholder = `Describe the ${selectedType.toLowerCase()} you want to build...`;
-        promptInput.focus();
-        buildSection.scrollIntoView({ behavior: "smooth" });
-      });
-    });
-
-    generateBtn.addEventListener("click", () => {
-      const prompt = promptInput.value.trim();
-      if (!prompt) {
-        alert("Please enter something to build.");
-        return;
-      }
-
-      previewArea.style.display = "block";
-      previewArea.scrollIntoView({ behavior: "smooth" });
-
-      const previewFrame = document.getElementById("preview");
-      previewFrame.srcdoc = `
-        <html>
-          <body style="font-family: Poppins; padding: 30px;">
-            <h1>${selectedType} Preview</h1>
-            <p><strong>Your idea:</strong> ${prompt}</p>
-            <p style="margin-top: 20px;">🚀 MindForge will generate a ${selectedType.toLowerCase()} for you soon!</p>
-          </body>
-        </html>
-      `;
-    });
-  </script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
