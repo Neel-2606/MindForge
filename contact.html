@@ -5,16 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contact Us - MindForge</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #101010, #1a1a1a);
+      color: #f0f0f0;
+    }
+    .contact-container {
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 40px;
+      background: #181818;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0, 255, 240, 0.1);
+    }
+    .contact-container h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: #00fff0;
+    }
+    .contact-container input,
+    .contact-container textarea {
+      width: 100%;
+      background: #222;
+      border: 1px solid #333;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 10px;
+      color: white;
+      font-size: 16px;
+    }
+    .contact-container button {
+      margin-top: 20px;
+      background: #00fff0;
+      color: black;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="build-section">
-  <div style="max-width: 700px; margin: auto; padding: 40px;">
-    <h1 style="font-size: 32px; margin-bottom: 20px;">📬 Contact Us</h1>
-    <p>Have a question, suggestion, or bug to report? Let us know below.</p>
-    <form style="margin-top: 30px;">
-      <input type="text" placeholder="Your Name" style="width:100%; padding:10px; margin:10px 0; border-radius:8px;" required>
-      <input type="email" placeholder="Your Email" style="width:100%; padding:10px; margin:10px 0; border-radius:8px;" required>
-      <textarea rows="6" placeholder="Your Message..." style="width:100%; padding:10px; margin:10px 0; border-radius:8px;" required></textarea>
-      <button type="submit" style="padding: 12px 28px; background: #00fff0; color: #000; border-radius: 8px; font-weight: bold;">Send</button>
+<body>
+  <div class="contact-container">
+    <h1>📬 Contact Us</h1>
+    <p>If you have any questions, feedback, or want to collaborate — we'd love to hear from you!</p>
+    <form>
+      <input type="text" placeholder="Your Name" required />
+      <input type="email" placeholder="Your Email" required />
+      <textarea rows="6" placeholder="Your Message..." required></textarea>
+      <button type="submit">Send Message</button>
     </form>
   </div>
 </body>

@@ -4,20 +4,18 @@
   box-sizing: border-box;
   font-family: 'Poppins', sans-serif;
 }
-.footer {
-  text-align: center;
-  padding: 15px;
-  font-size: 14px;
-  color: #888;
-  margin-top: 40px;
-  border-top: 1px solid #eee;
-}
 
 body {
   background: #0f0f0f;
   color: #f0f0f0;
   line-height: 1.6;
 }
+
+body.light {
+  background: #f0f0f0;
+  color: #111;
+}
+
 header.navbar {
   display: flex;
   justify-content: space-between;
@@ -28,17 +26,20 @@ header.navbar {
   top: 0;
   z-index: 100;
 }
+
 .navbar .logo {
   font-size: 28px;
   font-weight: bold;
   color: #00fff0;
 }
+
 .navbar nav a {
   color: #ccc;
   margin-left: 20px;
   text-decoration: none;
   font-weight: 500;
 }
+
 .hero {
   display: flex;
   justify-content: space-between;
@@ -46,13 +47,16 @@ header.navbar {
   padding: 80px 60px;
   background: linear-gradient(135deg, #111, #1e1e1e);
 }
+
 .hero-left h1 {
   font-size: 48px;
 }
+
 .hero-left p {
   margin: 20px 0;
   font-size: 18px;
 }
+
 #startBtn {
   padding: 12px 28px;
   background: #00fff0;
@@ -61,11 +65,13 @@ header.navbar {
   font-weight: bold;
   cursor: pointer;
 }
+
 .hero-right {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
+
 .hero-right .card {
   background: #222;
   padding: 30px;
@@ -73,15 +79,18 @@ header.navbar {
   text-align: center;
   transition: 0.3s;
 }
+
 .hero-right .card:hover {
   background: #333;
   transform: scale(1.05);
 }
+
 .build-section {
   padding: 60px;
   background: #181818;
   text-align: center;
 }
+
 #promptInput {
   width: 80%;
   height: 120px;
@@ -92,6 +101,7 @@ header.navbar {
   font-size: 16px;
   margin-bottom: 20px;
 }
+
 #generateBtn {
   padding: 12px 28px;
   background: #00fff0;
@@ -100,16 +110,20 @@ header.navbar {
   font-weight: bold;
   cursor: pointer;
 }
+
 .preview-section {
   background: #111;
   padding: 30px;
 }
+
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-bottom: 20px;
 }
+
 .toolbar button {
   padding: 8px 16px;
   background: #222;
@@ -118,13 +132,16 @@ header.navbar {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .workspace {
   display: flex;
   gap: 20px;
 }
+
 .preview-pane {
   flex: 2;
 }
+
 .preview-pane iframe {
   width: 100%;
   height: 500px;
@@ -132,33 +149,43 @@ header.navbar {
   border-radius: 10px;
   background: white;
 }
+
 .code-pane {
   flex: 1;
   background: #1c1c1c;
   padding: 10px;
   border-radius: 10px;
 }
+
 .code-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
 }
+
 .tab {
   padding: 6px 12px;
   background: #333;
   border-radius: 6px;
   cursor: pointer;
 }
+
 .tab.active {
   background: #00fff0;
   color: black;
 }
+
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   border-radius: 8px;
 }
 
-
-
-
+.footer {
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  color: #888;
+  margin-top: 40px;
+  border-top: 1px solid #eee;
+}

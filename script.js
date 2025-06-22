@@ -32,7 +32,6 @@ generateBtn.onclick = () => {
   const js = `console.log("Generated for: ${prompt}");`;
 
   previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-
   htmlCode.textContent = html;
   cssCode.textContent = css;
   jsCode.textContent = js;
@@ -57,6 +56,7 @@ document.getElementById("downloadBtn").onclick = () => {
 
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
+  previewFrame.contentWindow.document.body.classList.toggle("dark");
 };
 
 document.getElementById("fullscreenToggle").onclick = () => {
@@ -68,6 +68,38 @@ document.getElementById("toggleDevice").onclick = () => {
   previewFrame.style.width = isMobile ? "375px" : "100%";
 };
 
+// Deploy Instructions Button
+const deployBtn = document.createElement("button");
+deployBtn.innerText = "🌐 How to Deploy";
+deployBtn.onclick = () => {
+  document.getElementById("deployModal").style.display = "flex";
+};
+document.querySelector(".toolbar").appendChild(deployBtn);
+
+// Save to localStorage
+generateBtn.insertAdjacentHTML("afterend", '<button id="saveProject" style="margin-left:10px;">💾 Save</button>');
+document.getElementById("saveProject").onclick = () => {
+  localStorage.setItem("mindforge_project", JSON.stringify({
+    html: htmlCode.textContent,
+    css: cssCode.textContent,
+    js: jsCode.textContent
+  }));
+  alert("Project saved to browser.");
+};
+
+// Load from localStorage
+document.getElementById("saveProject").insertAdjacentHTML("afterend", '<button id="loadProject" style="margin-left:10px;">📂 Load</button>');
+document.getElementById("loadProject").onclick = () => {
+  const data = localStorage.getItem("mindforge_project");
+  if (!data) return alert("No saved project found.");
+  const { html, css, js } = JSON.parse(data);
+  htmlCode.textContent = html;
+  cssCode.textContent = css;
+  jsCode.textContent = js;
+  previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+  Prism.highlightAll();
+};
+
 document.querySelectorAll(".tab").forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -77,5 +109,3 @@ document.querySelectorAll(".tab").forEach(tab => {
     jsCode.style.display = tab.dataset.tab === "js" ? "block" : "none";
   };
 });
-
-
