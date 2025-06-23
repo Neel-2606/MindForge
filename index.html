@@ -17,7 +17,7 @@
       <a href="#features">Features</a>
       <a href="#tools">Tools</a>
       <a href="#faq">FAQ</a>
-      <a href="contact.html">Contact</a>
+      <a href="#contact">Contact</a>
     </nav>
   </header>
 
@@ -50,7 +50,7 @@
     </div>
   </section>
 
-  <!-- ✅ Build Section (hidden initially) -->
+  <!-- ✅ Build Section -->
   <section id="build" class="build-section" style="display:none;">
     <h2>What do you want to build today?</h2>
     <textarea id="promptInput" placeholder="Describe your project..."></textarea><br>
@@ -60,7 +60,7 @@
   <!-- ✅ Preview Section -->
   <section id="previewArea" class="preview-section" style="display:none;">
     <div class="toolbar">
-      <!-- Buttons added by script.js -->
+      <!-- Buttons will be inserted by script.js -->
     </div>
     <div class="workspace">
       <div class="preview-pane" id="previewPane">
@@ -81,73 +81,58 @@
     </div>
   </section>
 
-  <!-- ✅ Tools Section – Now Split -->
-<section id="tools" class="build-section" style="background:#121212;">
-  <h2 style="font-size: 36px; margin-bottom: 40px;">🧰 Current Tools</h2>
-  <div class="tool-grid">
-    <div class="tool-card animate-fade-in">
-      <h3>💡 AI Code Generator</h3>
-      <p>Generate real HTML, CSS, and JS from your prompt in seconds.</p>
+  <!-- ✅ Tools Section -->
+  <section id="tools" class="build-section" style="background:#121212;">
+    <h2 style="font-size: 36px; margin-bottom: 40px;">🧰 Current Tools</h2>
+    <div class="tool-grid">
+      <div class="tool-card animate-fade-in"><h3>💡 AI Code Generator</h3><p>Generate real HTML, CSS, and JS from your prompt in seconds.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.1s;"><h3>📱 Live Preview</h3><p>Instantly see how your code looks with device and fullscreen toggle.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.2s;"><h3>💾 Save & Load</h3><p>Save projects locally in your browser and reload them anytime.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.3s;"><h3>⬇️ Download</h3><p>Export your project as a standalone HTML file and use it anywhere.</p></div>
     </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.1s;">
-      <h3>📱 Live Preview</h3>
-      <p>Instantly see how your code looks with device and fullscreen toggle.</p>
-    </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.2s;">
-      <h3>💾 Save & Load</h3>
-      <p>Save projects locally in your browser and reload them anytime.</p>
-    </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.3s;">
-      <h3>⬇️ Download</h3>
-      <p>Export your project as a standalone HTML file and use it anywhere.</p>
-    </div>
-  </div>
 
-  <h2 style="font-size: 36px; margin: 60px 0 40px;">🛠 Upcoming Tools</h2>
-  <div class="tool-grid">
-    <div class="tool-card animate-fade-in">
-      <h3>🎨 Visual UI Builder</h3>
-      <p>Drag and drop UI components. Customize layouts instantly with AI assistance.</p>
+    <h2 style="font-size: 36px; margin: 60px 0 40px;">🛠 Upcoming Tools</h2>
+    <div class="tool-grid">
+      <div class="tool-card animate-fade-in"><h3>🎨 Visual UI Builder</h3><p>Drag and drop UI components. Customize layouts instantly with AI assistance.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.1s;"><h3>⚙️ Code Optimizer</h3><p>Clean, refactor, and boost performance of generated HTML/CSS/JS with one click.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.2s;"><h3>🚀 Deployment Panel</h3><p>One-click deploy to Netlify, Vercel, or GitHub Pages from within MindForge.</p></div>
+      <div class="tool-card animate-fade-in" style="animation-delay: 0.3s;"><h3>🧪 Live Testing Lab</h3><p>Run and test your apps in real-time with console, logs, and performance stats.</p></div>
     </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.1s;">
-      <h3>⚙️ Code Optimizer</h3>
-      <p>Clean, refactor, and boost performance of generated HTML/CSS/JS with one click.</p>
-    </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.2s;">
-      <h3>🚀 Deployment Panel</h3>
-      <p>One-click deploy to Netlify, Vercel, or GitHub Pages from within MindForge.</p>
-    </div>
-    <div class="tool-card animate-fade-in" style="animation-delay: 0.3s;">
-      <h3>🧪 Live Testing Lab</h3>
-      <p>Run and test your apps in real-time with console, logs, and performance stats.</p>
-    </div>
-  </div>
-</section>
+  </section>
 
+  <!-- ✅ FAQ Section -->
+  <section id="faq" class="build-section">
+    <h2 style="font-size: 36px; margin-bottom: 40px;">❓ Frequently Asked Questions</h2>
+    <div class="faq-grid">
+      <div class="faq-card animate-fade-in"><h3>🤖 How does MindForge work?</h3><p>MindForge uses powerful AI models to instantly generate real HTML, CSS, and JavaScript from your prompt.</p></div>
+      <div class="faq-card animate-fade-in" style="animation-delay: 0.1s;"><h3>📂 Can I save or export my project?</h3><p>Yes! You can save to your browser or download the generated site as a .html file.</p></div>
+      <div class="faq-card animate-fade-in" style="animation-delay: 0.2s;"><h3>🆓 Is MindForge free to use?</h3><p>Yes, basic usage is free. We may introduce premium features for pro users later.</p></div>
+      <div class="faq-card animate-fade-in" style="animation-delay: 0.3s;"><h3>🌐 Can I deploy my project online?</h3><p>Absolutely! Use the “How to Deploy” button to launch your project via Netlify, Vercel, or GitHub Pages.</p></div>
+    </div>
+  </section>
 
-<!-- ✅ New FAQ Section -->
-<section id="faq" class="build-section">
-  <h2 style="font-size: 36px; margin-bottom: 40px;">❓ Frequently Asked Questions</h2>
-  <div class="faq-grid">
-    <div class="faq-card animate-fade-in">
-      <h3>🤖 How does MindForge work?</h3>
-      <p>MindForge uses powerful AI models to instantly generate real HTML, CSS, and JavaScript from your prompt.</p>
-    </div>
-    <div class="faq-card animate-fade-in" style="animation-delay: 0.1s;">
-      <h3>📂 Can I save or export my project?</h3>
-      <p>Yes! You can save to your browser or download the generated site as a .html file.</p>
-    </div>
-    <div class="faq-card animate-fade-in" style="animation-delay: 0.2s;">
-      <h3>🆓 Is MindForge free to use?</h3>
-      <p>Yes, basic usage is free. We may introduce premium features for pro users later.</p>
-    </div>
-    <div class="faq-card animate-fade-in" style="animation-delay: 0.3s;">
-      <h3>🌐 Can I deploy my project online?</h3>
-      <p>Absolutely! Use the “How to Deploy” button to launch your project via Netlify, Vercel, or GitHub Pages.</p>
-    </div>
-  </div>
-</section>
+  <!-- ✅ Contact Section -->
+  <section id="contact" class="build-section" style="background:#101010; padding: 60px 20px;">
+    <h2 style="font-size: 36px; margin-bottom: 20px;">📨 Contact Us</h2>
+    <p style="max-width: 600px; margin: auto; font-size: 16px; line-height: 1.6;">
+      We'd love to hear from you! For feedback, questions, or support, please email:
+    </p>
+    <p style="margin-top: 20px; font-size: 18px;">
+      📧 <a href="mailto:contactmindforgehelp@gmail.com" style="color:#00fff0; font-weight:bold;">contactmindforgehelp@gmail.com</a>
+    </p>
+  </section>
 
+  <!-- ✅ Privacy Policy Section -->
+  <section id="privacy" class="build-section" style="padding: 60px 20px;">
+    <h2 style="font-size: 36px; margin-bottom: 20px;">🔒 Privacy & Policy</h2>
+    <div style="max-width: 800px; margin: auto; font-size: 15px; line-height: 1.8;">
+      <p><strong>1. Data Collection:</strong> MindForge does not collect or store any personal user data. All code and prompts stay in your browser.</p>
+      <p><strong>2. Cookies:</strong> We do not use cookies or trackers. All features work client-side.</p>
+      <p><strong>3. External APIs:</strong> Future versions may connect to APIs like OpenAI. These connections will be secure and only used to process your prompt.</p>
+      <p><strong>4. Local Storage:</strong> Project Save/Load uses your own browser’s local storage. We do not see, share, or upload it.</p>
+      <p><strong>5. Contact:</strong> For privacy concerns or issues, contact us at <a href="mailto:contactmindforgehelp@gmail.com" style="color:#00fff0;">contactmindforgehelp@gmail.com</a></p>
+    </div>
+  </section>
 
   <!-- ✅ Footer -->
   <footer class="footer">
@@ -157,25 +142,23 @@
         <small>Unleash your ideas into real code.</small>
       </div>
       <div style="display: flex; gap: 20px;">
-        <a href="contact.html" style="color:#00fff0;">Contact</a>
-        <a href="privacy.html" style="color:#00fff0;">Privacy Policy</a>
+        <a href="#contact" style="color:#00fff0;">Contact</a>
+        <a href="#privacy" style="color:#00fff0;">Privacy Policy</a>
       </div>
     </div>
-   
-  <p style="
-  margin-top: 30px;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-  color: #00fff0;
-  letter-spacing: 0.5px;
-">
-  🚀 Built with passion by <span style="color:#00bcd4;">Neel Prajapati</span> • © 2025 <strong>MindForge</strong>
-</p>
+    <p style="
+      margin-top: 30px;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      color: #00fff0;
+      letter-spacing: 0.5px;
+    ">
+      🚀 Built with passion by <span style="color:#00bcd4;">Neel Prajapati</span> • © 2025 <strong>MindForge</strong>
+    </p>
+  </footer>
 
-</footer>
-
-  <!-- ✅ Deploy Instructions Modal -->
+  <!-- ✅ Deploy Modal -->
   <div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:white; color:black; padding:30px; border-radius:12px; max-width:600px; width:90%; text-align:left; position:relative;">
       <h2>🌍 How to Deploy Your Project</h2>

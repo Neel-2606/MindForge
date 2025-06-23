@@ -21,14 +21,14 @@ cards.forEach(card => {
   };
 });
 
-// Handle navbar "Build" click — show build section even if no card clicked
+// Handle navbar "Build" click
 document.querySelector('a[href="#build"]').addEventListener("click", e => {
   e.preventDefault();
   buildSection.style.display = "block";
   buildSection.scrollIntoView({ behavior: "smooth" });
 });
 
-// Generate content
+// Generate preview
 generateBtn.onclick = () => {
   const prompt = promptInput.value.trim();
   if (!prompt) return alert("Please enter your project idea.");
@@ -48,10 +48,70 @@ generateBtn.onclick = () => {
   Prism.highlightAll();
 };
 
-// Toolbar actions
-document.getElementById("regenerateBtn").onclick = () => generateBtn.click();
+// Toolbar buttons (dynamically injected)
+const toolbar = document.querySelector(".toolbar");
 
-document.getElementById("downloadBtn").onclick = () => {
+// 💾 Save
+const saveBtn = document.createElement("button");
+saveBtn.id = "saveProject";
+saveBtn.innerText = "💾 Save";
+saveBtn.onclick = () => {
+  localStorage.setItem("mindforge_project", JSON.stringify({
+    html: htmlCode.textContent,
+    css: cssCode.textContent,
+    js: jsCode.textContent
+  }));
+  alert("Project saved to browser.");
+};
+toolbar.appendChild(saveBtn);
+
+// 📂 Load
+const loadBtn = document.createElement("button");
+loadBtn.id = "loadProject";
+loadBtn.innerText = "📂 Load";
+loadBtn.onclick = () => {
+  const data = localStorage.getItem("mindforge_project");
+  if (!data) return alert("No saved project found.");
+  const { html, css, js } = JSON.parse(data);
+  htmlCode.textContent = html;
+  cssCode.textContent = css;
+  jsCode.textContent = js;
+  previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+  Prism.highlightAll();
+};
+toolbar.appendChild(loadBtn);
+
+// 📱 Toggle Device
+const toggleDeviceBtn = document.createElement("button");
+toggleDeviceBtn.id = "toggleDevice";
+toggleDeviceBtn.innerText = "📱 Toggle Device";
+toggleDeviceBtn.onclick = () => {
+  isMobile = !isMobile;
+  previewFrame.style.width = isMobile ? "375px" : "100%";
+};
+toolbar.appendChild(toggleDeviceBtn);
+
+// 🔍 Fullscreen
+const fullscreenBtn = document.createElement("button");
+fullscreenBtn.id = "fullscreenToggle";
+fullscreenBtn.innerText = "🔍 Fullscreen";
+fullscreenBtn.onclick = () => {
+  document.getElementById("previewPane").classList.toggle("fullscreen");
+};
+toolbar.appendChild(fullscreenBtn);
+
+// 🔁 Regenerate
+const regenerateBtn = document.createElement("button");
+regenerateBtn.id = "regenerateBtn";
+regenerateBtn.innerText = "🔁 Regenerate";
+regenerateBtn.onclick = () => generateBtn.click();
+toolbar.appendChild(regenerateBtn);
+
+// ⬇️ Download
+const downloadBtn = document.createElement("button");
+downloadBtn.id = "downloadBtn";
+downloadBtn.innerText = "⬇️ Download";
+downloadBtn.onclick = () => {
   const zipContent = `
     <html>
     <head><style>${cssCode.textContent}</style></head>
@@ -64,63 +124,25 @@ document.getElementById("downloadBtn").onclick = () => {
   a.download = "mindforge.html";
   a.click();
 };
+toolbar.appendChild(downloadBtn);
 
-document.getElementById("themeToggle").onclick = () => {
+// 🌓 Theme Toggle
+const themeToggleBtn = document.createElement("button");
+themeToggleBtn.id = "themeToggle";
+themeToggleBtn.innerText = "🌓 Toggle Theme";
+themeToggleBtn.onclick = () => {
   document.body.classList.toggle("light");
   previewFrame.contentWindow.document.body.classList.toggle("dark");
 };
+toolbar.appendChild(themeToggleBtn);
 
-document.getElementById("fullscreenToggle").onclick = () => {
-  document.getElementById("previewPane").classList.toggle("fullscreen");
-};
-
-document.getElementById("toggleDevice").onclick = () => {
-  isMobile = !isMobile;
-  previewFrame.style.width = isMobile ? "375px" : "100%";
-};
-
-// 🌐 Deploy instructions button
+// 🌐 How to Deploy
 const deployBtn = document.createElement("button");
 deployBtn.innerText = "🌐 How to Deploy";
 deployBtn.onclick = () => {
   document.getElementById("deployModal").style.display = "flex";
 };
-document.querySelector(".toolbar").appendChild(deployBtn);
-
-// 💾 Save + 📂 Load buttons (inserted in toolbar with same styles)
-const saveBtn = document.createElement("button");
-saveBtn.id = "saveProject";
-saveBtn.innerText = "💾 Save";
-
-const loadBtn = document.createElement("button");
-loadBtn.id = "loadProject";
-loadBtn.innerText = "📂 Load";
-
-const toolbar = document.querySelector(".toolbar");
-toolbar.insertBefore(loadBtn, toolbar.firstChild);
-toolbar.insertBefore(saveBtn, toolbar.firstChild);
-
-// Save project to browser
-saveBtn.onclick = () => {
-  localStorage.setItem("mindforge_project", JSON.stringify({
-    html: htmlCode.textContent,
-    css: cssCode.textContent,
-    js: jsCode.textContent
-  }));
-  alert("Project saved to browser.");
-};
-
-// Load project from browser
-loadBtn.onclick = () => {
-  const data = localStorage.getItem("mindforge_project");
-  if (!data) return alert("No saved project found.");
-  const { html, css, js } = JSON.parse(data);
-  htmlCode.textContent = html;
-  cssCode.textContent = css;
-  jsCode.textContent = js;
-  previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-  Prism.highlightAll();
-};
+toolbar.appendChild(deployBtn);
 
 // Tab switching
 document.querySelectorAll(".tab").forEach(tab => {
