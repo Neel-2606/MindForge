@@ -48,6 +48,14 @@ generateBtn.onclick = () => {
   Prism.highlightAll();
 };
 
+const startBtn = document.getElementById("startBtn");
+
+startBtn.onclick = () => {
+  buildSection.style.display = "block";
+  buildSection.scrollIntoView({ behavior: "smooth" });
+};
+
+
 // Toolbar buttons (dynamically injected)
 const toolbar = document.querySelector(".toolbar");
 
