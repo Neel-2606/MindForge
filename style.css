@@ -244,4 +244,45 @@ pre {
   margin-top: 40px;
   border-top: 1px solid #eee;
 }
+/* 🔥 Custom Grid Layout for Tools & FAQ */
+.tool-grid,
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1100px;
+  margin: auto;
+  padding: 40px 20px;
+}
+
+.tool-card,
+.faq-card {
+  background: #1f1f1f;
+  border: 1px solid #00fff0;
+  border-radius: 16px;
+  padding: 25px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tool-card:hover,
+.faq-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 15px rgba(0, 255, 240, 0.3);
+}
+
+/* 🌀 Animation */
+.animate-fade-in {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 

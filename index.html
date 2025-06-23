@@ -9,6 +9,7 @@
 </head>
 <body>
 
+  <!-- ✅ Header/Navbar -->
   <header class="navbar">
     <div class="logo">MindForge ⚡</div>
     <nav>
@@ -20,6 +21,7 @@
     </nav>
   </header>
 
+  <!-- ✅ Hero Section -->
   <section class="hero">
     <div class="hero-left">
       <h1>Forge the Future with AI</h1>
@@ -36,7 +38,7 @@
     </div>
   </section>
 
-  <!-- 🌟 Feature Section -->
+  <!-- ✅ Feature Section -->
   <section id="features" class="build-section" style="background:#111; padding: 60px 30px;">
     <h2 style="text-align:center; font-size: 36px; margin-bottom: 40px;">What You Can Build with MindForge</h2>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
@@ -48,21 +50,18 @@
     </div>
   </section>
 
+  <!-- ✅ Build Section (hidden initially) -->
   <section id="build" class="build-section" style="display:none;">
     <h2>What do you want to build today?</h2>
     <textarea id="promptInput" placeholder="Describe your project..."></textarea><br>
     <button id="generateBtn">Generate with AI</button>
   </section>
 
+  <!-- ✅ Preview Section -->
   <section id="previewArea" class="preview-section" style="display:none;">
     <div class="toolbar">
-      <button id="toggleDevice">📱 Toggle Device</button>
-      <button id="fullscreenToggle">🔍 Fullscreen</button>
-      <button id="regenerateBtn">🔁 Regenerate</button>
-      <button id="downloadBtn">⬇️ Download</button>
-      <button id="themeToggle">🌓 Toggle Theme</button>
+      <!-- Buttons added by script.js -->
     </div>
-
     <div class="workspace">
       <div class="preview-pane" id="previewPane">
         <iframe id="previewFrame"></iframe>
@@ -82,7 +81,54 @@
     </div>
   </section>
 
-  <!-- ⚡ Enhanced Footer -->
+  <!-- ✅ New Tools Section -->
+<section id="tools" class="build-section" style="background:#121212;">
+  <h2 style="font-size: 36px; margin-bottom: 40px;">🛠 Upcoming AI Tools</h2>
+  <div class="tool-grid">
+    <div class="tool-card animate-fade-in">
+      <h3>🎨 Visual UI Builder</h3>
+      <p>Drag and drop UI components. Customize layouts instantly with AI assistance.</p>
+    </div>
+    <div class="tool-card animate-fade-in" style="animation-delay: 0.1s;">
+      <h3>⚙️ Code Optimizer</h3>
+      <p>Clean, refactor, and boost performance of generated HTML/CSS/JS with one click.</p>
+    </div>
+    <div class="tool-card animate-fade-in" style="animation-delay: 0.2s;">
+      <h3>🚀 Deployment Panel</h3>
+      <p>One-click deploy to Netlify, Vercel, or GitHub Pages from within MindForge.</p>
+    </div>
+    <div class="tool-card animate-fade-in" style="animation-delay: 0.3s;">
+      <h3>🧪 Live Testing Lab</h3>
+      <p>Run and test your apps in real-time with console, logs, and performance stats.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ✅ New FAQ Section -->
+<section id="faq" class="build-section">
+  <h2 style="font-size: 36px; margin-bottom: 40px;">❓ Frequently Asked Questions</h2>
+  <div class="faq-grid">
+    <div class="faq-card animate-fade-in">
+      <h3>🤖 How does MindForge work?</h3>
+      <p>MindForge uses powerful AI models to instantly generate real HTML, CSS, and JavaScript from your prompt.</p>
+    </div>
+    <div class="faq-card animate-fade-in" style="animation-delay: 0.1s;">
+      <h3>📂 Can I save or export my project?</h3>
+      <p>Yes! You can save to your browser or download the generated site as a .html file.</p>
+    </div>
+    <div class="faq-card animate-fade-in" style="animation-delay: 0.2s;">
+      <h3>🆓 Is MindForge free to use?</h3>
+      <p>Yes, basic usage is free. We may introduce premium features for pro users later.</p>
+    </div>
+    <div class="faq-card animate-fade-in" style="animation-delay: 0.3s;">
+      <h3>🌐 Can I deploy my project online?</h3>
+      <p>Absolutely! Use the “How to Deploy” button to launch your project via Netlify, Vercel, or GitHub Pages.</p>
+    </div>
+  </div>
+</section>
+
+
+  <!-- ✅ Footer -->
   <footer class="footer">
     <div style="max-width: 1000px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 20px;">
       <div>
@@ -97,7 +143,7 @@
     <p style="margin-top: 20px; font-size: 12px; color: #555;">© 2025 MindForge. Created by <strong>Neel Prajapati</strong>.</p>
   </footer>
 
-  <!-- 📦 Deploy Instructions Modal -->
+  <!-- ✅ Deploy Instructions Modal -->
   <div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:white; color:black; padding:30px; border-radius:12px; max-width:600px; width:90%; text-align:left; position:relative;">
       <h2>🌍 How to Deploy Your Project</h2>
@@ -110,6 +156,7 @@
     </div>
   </div>
 
+  <!-- ✅ Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>

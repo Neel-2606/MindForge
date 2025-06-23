@@ -21,7 +21,14 @@ cards.forEach(card => {
   };
 });
 
-// Generate code on click
+// Handle navbar "Build" click — show build section even if no card clicked
+document.querySelector('a[href="#build"]').addEventListener("click", e => {
+  e.preventDefault();
+  buildSection.style.display = "block";
+  buildSection.scrollIntoView({ behavior: "smooth" });
+});
+
+// Generate content
 generateBtn.onclick = () => {
   const prompt = promptInput.value.trim();
   if (!prompt) return alert("Please enter your project idea.");
@@ -41,8 +48,9 @@ generateBtn.onclick = () => {
   Prism.highlightAll();
 };
 
-// Toolbar Buttons
+// Toolbar actions
 document.getElementById("regenerateBtn").onclick = () => generateBtn.click();
+
 document.getElementById("downloadBtn").onclick = () => {
   const zipContent = `
     <html>
@@ -71,7 +79,7 @@ document.getElementById("toggleDevice").onclick = () => {
   previewFrame.style.width = isMobile ? "375px" : "100%";
 };
 
-// Deploy Instructions
+// 🌐 Deploy instructions button
 const deployBtn = document.createElement("button");
 deployBtn.innerText = "🌐 How to Deploy";
 deployBtn.onclick = () => {
@@ -79,7 +87,7 @@ deployBtn.onclick = () => {
 };
 document.querySelector(".toolbar").appendChild(deployBtn);
 
-// ✅ Add Save and Load buttons inside toolbar with same glowing style
+// 💾 Save + 📂 Load buttons (inserted in toolbar with same styles)
 const saveBtn = document.createElement("button");
 saveBtn.id = "saveProject";
 saveBtn.innerText = "💾 Save";
@@ -92,7 +100,7 @@ const toolbar = document.querySelector(".toolbar");
 toolbar.insertBefore(loadBtn, toolbar.firstChild);
 toolbar.insertBefore(saveBtn, toolbar.firstChild);
 
-// Save Project
+// Save project to browser
 saveBtn.onclick = () => {
   localStorage.setItem("mindforge_project", JSON.stringify({
     html: htmlCode.textContent,
@@ -102,7 +110,7 @@ saveBtn.onclick = () => {
   alert("Project saved to browser.");
 };
 
-// Load Project
+// Load project from browser
 loadBtn.onclick = () => {
   const data = localStorage.getItem("mindforge_project");
   if (!data) return alert("No saved project found.");
@@ -114,7 +122,7 @@ loadBtn.onclick = () => {
   Prism.highlightAll();
 };
 
-// Code Tabs
+// Tab switching
 document.querySelectorAll(".tab").forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
