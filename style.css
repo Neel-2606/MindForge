@@ -124,13 +124,26 @@ header.navbar {
   margin-bottom: 20px;
 }
 
+/* ✅ New Premium Button Styling */
 .toolbar button {
-  padding: 8px 16px;
-  background: #222;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 10px 20px;
+  background: linear-gradient(145deg, #1c1c1c, #121212);
+  border: 1px solid #00fff0;
+  color: #00fff0;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 0 10px rgba(0, 255, 240, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.toolbar button:hover {
+  background: #00fff0;
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 255, 240, 0.8), 0 0 30px rgba(0, 255, 240, 0.5);
+  transform: scale(1.05);
 }
 
 .workspace {
@@ -163,22 +176,64 @@ header.navbar {
   margin-bottom: 10px;
 }
 
+/* ✅ Tab Button Upgrades */
 .tab {
-  padding: 6px 12px;
-  background: #333;
-  border-radius: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(145deg, #1a1a1a, #0e0e0e);
+  border: 1px solid #00fff0;
+  color: #00fff0;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  background: #00fff0;
+  color: #000;
+  transform: scale(1.05);
 }
 
 .tab.active {
   background: #00fff0;
   color: black;
+  box-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
 }
 
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   border-radius: 8px;
+}
+
+/* ✅ Responsive Tweaks */
+@media (max-width: 768px) {
+  .workspace {
+    flex-direction: column;
+  }
+
+  .preview-pane iframe {
+    height: 300px;
+  }
+}
+
+@media (max-width: 600px) {
+  .toolbar {
+    justify-content: center;
+  }
+
+  .toolbar button {
+    flex: 1 1 100%;
+  }
+
+  .code-tabs {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    flex: 1 1 auto;
+  }
 }
 
 .footer {
@@ -189,3 +244,4 @@ pre {
   margin-top: 40px;
   border-top: 1px solid #eee;
 }
+
