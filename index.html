@@ -164,73 +164,87 @@
     </p>
   </footer>
 
-<!-- ✅ Improved, Scrollable Deploy Modal -->
-<div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center; overflow:auto;">
+<!-- ✅ Fixed Scrollable Deploy Modal (opens from top, scrolls down) -->
+<div id="deployModal" style="
+  display: none; 
+  position: fixed; 
+  inset: 0; 
+  background: rgba(0, 0, 0, 0.7); 
+  z-index: 9999; 
+  overflow-y: auto;
+  padding: 40px 20px;
+">
   <div style="
-    background:white; 
-    color:black; 
-    padding:30px; 
-    border-radius:12px; 
-    max-width:700px; 
-    width:90%; 
-    text-align:left; 
-    position:relative;
-    margin: 60px auto; 
+    background: white; 
+    color: black; 
+    padding: 30px; 
+    border-radius: 12px; 
+    max-width: 700px; 
+    margin: auto; 
+    text-align: left; 
+    position: relative;
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
   ">
-    <h2 style="margin-bottom: 10px;">🌍 How to Deploy Your Project</h2>
-    <p style="font-size: 15px; color: #444;">Here's how you can host your MindForge project online for free using trusted platforms:</p>
+    <h2>🌍 How to Deploy Your Project</h2>
+    <p style="font-size: 15px; color: #444;">
+      Here's how you can host your MindForge project online using popular free services:
+    </p>
 
     <hr style="margin: 20px 0;">
 
     <h3>🟢 1. Deploy to Netlify (Easiest)</h3>
-    <ol style="margin-top:10px; padding-left: 20px;">
-      <li>Go to <a href="https://app.netlify.com/drop" target="_blank">https://app.netlify.com/drop</a></li>
-      <li>Drag and drop your downloaded <strong>mindforge.html</strong> file into the page.</li>
-      <li>Wait 3–5 seconds — your site will be live instantly with a Netlify URL.</li>
-      <li>You can rename your site and manage it via your Netlify dashboard (free login required).</li>
+    <ol style="padding-left: 20px;">
+      <li>Go to <a href="https://app.netlify.com/drop" target="_blank">netlify.com/drop</a>.</li>
+      <li>Drag and drop your <strong>mindforge.html</strong> file.</li>
+      <li>It will go live instantly with a free Netlify URL.</li>
+      <li>Optionally rename your site in your Netlify dashboard.</li>
     </ol>
-    <p><em>✅ No coding or GitHub required. Best for fast testing or demos.</em></p>
+    <p><em>✅ No coding required — great for fast testing.</em></p>
 
     <hr style="margin: 30px 0;">
 
     <h3>🟣 2. Deploy with GitHub Pages</h3>
-    <ol style="margin-top:10px; padding-left: 20px;">
-      <li>Go to <a href="https://github.com" target="_blank">GitHub.com</a> and create a new repository (public or private).</li>
-      <li>Name the repo (e.g., <code>mindforge-project</code>), then click <strong>Create Repository</strong>.</li>
-      <li>Upload your HTML file using the "Add file → Upload files" button.</li>
+    <ol style="padding-left: 20px;">
+      <li>Create a GitHub repo at <a href="https://github.com" target="_blank">GitHub.com</a>.</li>
+      <li>Name it (e.g. <code>mindforge-project</code>), click <strong>Create Repository</strong>.</li>
+      <li>Upload your <code>index.html</code> via "Add file → Upload files".</li>
       <li>Go to <strong>Settings → Pages</strong>.</li>
-      <li>Under "Source", choose <strong>main branch</strong>, then click <strong>Save</strong>.</li>
-      <li>Your website will be live at: <code>https://yourusername.github.io/repository-name</code></li>
+      <li>Choose <strong>main branch</strong> as the source, then click <strong>Save</strong>.</li>
+      <li>Your site is live at: <code>https://yourusername.github.io/repo-name</code></li>
     </ol>
-    <p><em>🧠 Ideal for developers, students, and GitHub users.</em></p>
+    <p><em>🧠 Great for students and developers.</em></p>
 
     <hr style="margin: 30px 0;">
 
     <h3>⚪ 3. Deploy with Vercel</h3>
-    <ol style="margin-top:10px; padding-left: 20px;">
-      <li>Visit <a href="https://vercel.com/" target="_blank">https://vercel.com</a> and log in with GitHub or email.</li>
-      <li>Click <strong>New Project</strong> → Import your GitHub repo (must contain your HTML file).</li>
-      <li>Vercel will auto-detect the settings and deploy your site.</li>
-      <li>Once deployed, you’ll get a live link like: <code>https://yourproject.vercel.app</code></li>
+    <ol style="padding-left: 20px;">
+      <li>Visit <a href="https://vercel.com" target="_blank">vercel.com</a> and log in.</li>
+      <li>Click <strong>New Project</strong> → Import your GitHub repo.</li>
+      <li>It auto-deploys your site with a free `.vercel.app` domain.</li>
     </ol>
-    <p><em>⚙️ Great for future AI backend, JS apps, or login systems.</em></p>
+    <p><em>⚙️ Ideal for advanced web apps or AI integrations.</em></p>
 
     <hr style="margin: 30px 0;">
 
     <h3>📌 Extra Tips</h3>
-    <ul style="padding-left: 20px; margin-top:10px;">
-      <li>✅ Name your file <strong>index.html</strong> so it auto-loads.</li>
-      <li>🗂 If you use HTML, CSS, and JS files — zip them together before uploading.</li>
-      <li>🔍 Test your site on mobile and desktop after deployment.</li>
-      <li>📌 Add credits or footer info before going live.</li>
+    <ul style="padding-left: 20px;">
+      <li>✅ Rename your file to <strong>index.html</strong> before uploading.</li>
+      <li>🗂 Zip your files if using HTML + CSS + JS separately.</li>
+      <li>📱 Always test on mobile + desktop after publishing.</li>
     </ul>
 
-    <p style="font-size: 12px; margin-top: 25px; color: #777;">
-      <em>Disclaimer: MindForge is not affiliated with Netlify, GitHub, Vercel, or OpenAI. These are third-party platforms recommended for deployment only. All trademarks and logos belong to their respective owners.</em>
+    <p style="font-size: 12px; color: #777; margin-top: 30px;">
+      <em>Disclaimer: MindForge is not affiliated with any third-party platforms. All logos and services belong to their respective owners.</em>
     </p>
 
-    <button onclick="document.getElementById('deployModal').style.display='none'" style="margin-top:25px; background:#111; color:white; padding:10px 20px; border:none; border-radius:8px;">Close</button>
+    <button onclick="document.getElementById('deployModal').style.display='none'" style="
+      margin-top: 25px; 
+      background: #111; 
+      color: white; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 8px;
+    ">Close</button>
   </div>
 </div>
 
