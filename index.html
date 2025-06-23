@@ -164,9 +164,20 @@
     </p>
   </footer>
 
-<!-- ✅ Detailed Deploy Instructions Modal -->
-<div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:white; color:black; padding:30px; border-radius:12px; max-width:700px; width:90%; text-align:left; position:relative;">
+<!-- ✅ Improved, Scrollable Deploy Modal -->
+<div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center; overflow:auto;">
+  <div style="
+    background:white; 
+    color:black; 
+    padding:30px; 
+    border-radius:12px; 
+    max-width:700px; 
+    width:90%; 
+    text-align:left; 
+    position:relative;
+    margin: 60px auto; 
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  ">
     <h2 style="margin-bottom: 10px;">🌍 How to Deploy Your Project</h2>
     <p style="font-size: 15px; color: #444;">Here's how you can host your MindForge project online for free using trusted platforms:</p>
 
@@ -174,7 +185,7 @@
 
     <h3>🟢 1. Deploy to Netlify (Easiest)</h3>
     <ol style="margin-top:10px; padding-left: 20px;">
-      <li>Click this link: <a href="https://app.netlify.com/drop" target="_blank">https://app.netlify.com/drop</a></li>
+      <li>Go to <a href="https://app.netlify.com/drop" target="_blank">https://app.netlify.com/drop</a></li>
       <li>Drag and drop your downloaded <strong>mindforge.html</strong> file into the page.</li>
       <li>Wait 3–5 seconds — your site will be live instantly with a Netlify URL.</li>
       <li>You can rename your site and manage it via your Netlify dashboard (free login required).</li>
@@ -209,16 +220,19 @@
 
     <h3>📌 Extra Tips</h3>
     <ul style="padding-left: 20px; margin-top:10px;">
-      <li>✅ Make sure your file is named <strong>index.html</strong> for auto-loading.</li>
-      <li>📁 If you export multiple files (HTML/CSS/JS), put them in a folder or zip before deploying.</li>
-      <li>🌐 Always test your live site on both desktop and mobile.</li>
-      <li>🧠 Add your name or project credits in footer before going live.</li>
+      <li>✅ Name your file <strong>index.html</strong> so it auto-loads.</li>
+      <li>🗂 If you use HTML, CSS, and JS files — zip them together before uploading.</li>
+      <li>🔍 Test your site on mobile and desktop after deployment.</li>
+      <li>📌 Add credits or footer info before going live.</li>
     </ul>
+
+    <p style="font-size: 12px; margin-top: 25px; color: #777;">
+      <em>Disclaimer: MindForge is not affiliated with Netlify, GitHub, Vercel, or OpenAI. These are third-party platforms recommended for deployment only. All trademarks and logos belong to their respective owners.</em>
+    </p>
 
     <button onclick="document.getElementById('deployModal').style.display='none'" style="margin-top:25px; background:#111; color:white; padding:10px 20px; border:none; border-radius:8px;">Close</button>
   </div>
 </div>
-
 
   <!-- ✅ Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
