@@ -122,17 +122,23 @@
     </p>
   </section>
 
-  <!-- ✅ Privacy Policy Section -->
-  <section id="privacy" class="build-section" style="padding: 60px 20px;">
-    <h2 style="font-size: 36px; margin-bottom: 20px;">🔒 Privacy & Policy</h2>
-    <div style="max-width: 800px; margin: auto; font-size: 15px; line-height: 1.8;">
-      <p><strong>1. Data Collection:</strong> MindForge does not collect or store any personal user data. All code and prompts stay in your browser.</p>
-      <p><strong>2. Cookies:</strong> We do not use cookies or trackers. All features work client-side.</p>
-      <p><strong>3. External APIs:</strong> Future versions may connect to APIs like OpenAI. These connections will be secure and only used to process your prompt.</p>
-      <p><strong>4. Local Storage:</strong> Project Save/Load uses your own browser’s local storage. We do not see, share, or upload it.</p>
-      <p><strong>5. Contact:</strong> For privacy concerns or issues, contact us at <a href="mailto:contactmindforgehelp@gmail.com" style="color:#00fff0;">contactmindforgehelp@gmail.com</a></p>
-    </div>
-  </section>
+<!-- ✅ Privacy Policy Section -->
+<section id="privacy" class="build-section" style="padding: 60px 20px;">
+  <h2 style="font-size: 36px; margin-bottom: 20px;">🔒 Privacy & Policy</h2>
+  <div style="max-width: 800px; margin: auto; font-size: 15px; line-height: 1.8; color: #ccc;">
+    <p><strong>1. Data Collection:</strong> MindForge does not collect or store any personal user data. All prompts, projects, and generated content remain on your device only.</p>
+    <p><strong>2. Cookies:</strong> We do not use cookies, tracking pixels, or any analytics services.</p>
+    <p><strong>3. External APIs:</strong> Future versions may offer integration with APIs like OpenAI or Gemini. These will only process prompt-based data and will not collect personal information.</p>
+    <p><strong>4. Local Storage:</strong> MindForge uses your browser's local storage to save/load projects. Your data is never transmitted or stored on any server.</p>
+    <p><strong>5. Email Communication:</strong> You may contact us at <a href="mailto:contactmindforgehelp@gmail.com" style="color:#00fff0;">contactmindforgehelp@gmail.com</a>. We do not send any unsolicited emails or newsletters.</p>
+    <p><strong>6. Third-Party Tools:</strong> MindForge may suggest or link to platforms like Netlify, GitHub Pages, and Vercel for deployment purposes.</p>
+
+    <p style="font-size: 13px; margin-top: 25px; color: #888;">
+      <em>Disclaimer: MindForge is not affiliated with Netlify, GitHub, Vercel, OpenAI, or any third-party service mentioned. All logos, trademarks, and platform names belong to their respective owners. MindForge simply provides educational guidance for deployment and development purposes.</em>
+    </p>
+  </div>
+</section>
+
 
   <!-- ✅ Footer -->
   <footer class="footer">
@@ -158,18 +164,61 @@
     </p>
   </footer>
 
-  <!-- ✅ Deploy Modal -->
-  <div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-    <div style="background:white; color:black; padding:30px; border-radius:12px; max-width:600px; width:90%; text-align:left; position:relative;">
-      <h2>🌍 How to Deploy Your Project</h2>
-      <ol style="margin-top:20px; padding-left:20px;">
-        <li><strong>Netlify:</strong> Go to <a href='https://app.netlify.com/drop' target='_blank'>netlify.com/drop</a> and drag your .html file.</li>
-        <li><strong>GitHub Pages:</strong> Push your file to a GitHub repo. Enable Pages from Settings.</li>
-        <li><strong>Vercel:</strong> Upload or connect GitHub repo for instant deployment.</li>
-      </ol>
-      <button onclick="document.getElementById('deployModal').style.display='none'" style="margin-top:20px; background:#111; color:white; padding:10px 20px; border:none; border-radius:8px;">Close</button>
-    </div>
+<!-- ✅ Detailed Deploy Instructions Modal -->
+<div id="deployModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:white; color:black; padding:30px; border-radius:12px; max-width:700px; width:90%; text-align:left; position:relative;">
+    <h2 style="margin-bottom: 10px;">🌍 How to Deploy Your Project</h2>
+    <p style="font-size: 15px; color: #444;">Here's how you can host your MindForge project online for free using trusted platforms:</p>
+
+    <hr style="margin: 20px 0;">
+
+    <h3>🟢 1. Deploy to Netlify (Easiest)</h3>
+    <ol style="margin-top:10px; padding-left: 20px;">
+      <li>Click this link: <a href="https://app.netlify.com/drop" target="_blank">https://app.netlify.com/drop</a></li>
+      <li>Drag and drop your downloaded <strong>mindforge.html</strong> file into the page.</li>
+      <li>Wait 3–5 seconds — your site will be live instantly with a Netlify URL.</li>
+      <li>You can rename your site and manage it via your Netlify dashboard (free login required).</li>
+    </ol>
+    <p><em>✅ No coding or GitHub required. Best for fast testing or demos.</em></p>
+
+    <hr style="margin: 30px 0;">
+
+    <h3>🟣 2. Deploy with GitHub Pages</h3>
+    <ol style="margin-top:10px; padding-left: 20px;">
+      <li>Go to <a href="https://github.com" target="_blank">GitHub.com</a> and create a new repository (public or private).</li>
+      <li>Name the repo (e.g., <code>mindforge-project</code>), then click <strong>Create Repository</strong>.</li>
+      <li>Upload your HTML file using the "Add file → Upload files" button.</li>
+      <li>Go to <strong>Settings → Pages</strong>.</li>
+      <li>Under "Source", choose <strong>main branch</strong>, then click <strong>Save</strong>.</li>
+      <li>Your website will be live at: <code>https://yourusername.github.io/repository-name</code></li>
+    </ol>
+    <p><em>🧠 Ideal for developers, students, and GitHub users.</em></p>
+
+    <hr style="margin: 30px 0;">
+
+    <h3>⚪ 3. Deploy with Vercel</h3>
+    <ol style="margin-top:10px; padding-left: 20px;">
+      <li>Visit <a href="https://vercel.com/" target="_blank">https://vercel.com</a> and log in with GitHub or email.</li>
+      <li>Click <strong>New Project</strong> → Import your GitHub repo (must contain your HTML file).</li>
+      <li>Vercel will auto-detect the settings and deploy your site.</li>
+      <li>Once deployed, you’ll get a live link like: <code>https://yourproject.vercel.app</code></li>
+    </ol>
+    <p><em>⚙️ Great for future AI backend, JS apps, or login systems.</em></p>
+
+    <hr style="margin: 30px 0;">
+
+    <h3>📌 Extra Tips</h3>
+    <ul style="padding-left: 20px; margin-top:10px;">
+      <li>✅ Make sure your file is named <strong>index.html</strong> for auto-loading.</li>
+      <li>📁 If you export multiple files (HTML/CSS/JS), put them in a folder or zip before deploying.</li>
+      <li>🌐 Always test your live site on both desktop and mobile.</li>
+      <li>🧠 Add your name or project credits in footer before going live.</li>
+    </ul>
+
+    <button onclick="document.getElementById('deployModal').style.display='none'" style="margin-top:25px; background:#111; color:white; padding:10px 20px; border:none; border-radius:8px;">Close</button>
   </div>
+</div>
+
 
   <!-- ✅ Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
