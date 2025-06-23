@@ -11,6 +11,7 @@ const jsCode = document.getElementById("jsCode");
 let selectedType = "Website";
 let isMobile = false;
 
+// Show build section on card click
 cards.forEach(card => {
   card.onclick = () => {
     selectedType = card.getAttribute("data-type");
@@ -20,6 +21,7 @@ cards.forEach(card => {
   };
 });
 
+// Generate code on click
 generateBtn.onclick = () => {
   const prompt = promptInput.value.trim();
   if (!prompt) return alert("Please enter your project idea.");
@@ -39,6 +41,7 @@ generateBtn.onclick = () => {
   Prism.highlightAll();
 };
 
+// Toolbar Buttons
 document.getElementById("regenerateBtn").onclick = () => generateBtn.click();
 document.getElementById("downloadBtn").onclick = () => {
   const zipContent = `
@@ -68,7 +71,7 @@ document.getElementById("toggleDevice").onclick = () => {
   previewFrame.style.width = isMobile ? "375px" : "100%";
 };
 
-// Deploy Instructions Button
+// Deploy Instructions
 const deployBtn = document.createElement("button");
 deployBtn.innerText = "🌐 How to Deploy";
 deployBtn.onclick = () => {
@@ -76,9 +79,21 @@ deployBtn.onclick = () => {
 };
 document.querySelector(".toolbar").appendChild(deployBtn);
 
-// Save to localStorage
-generateBtn.insertAdjacentHTML("afterend", '<button id="saveProject" style="margin-left:10px;">💾 Save</button>');
-document.getElementById("saveProject").onclick = () => {
+// ✅ Add Save and Load buttons inside toolbar with same glowing style
+const saveBtn = document.createElement("button");
+saveBtn.id = "saveProject";
+saveBtn.innerText = "💾 Save";
+
+const loadBtn = document.createElement("button");
+loadBtn.id = "loadProject";
+loadBtn.innerText = "📂 Load";
+
+const toolbar = document.querySelector(".toolbar");
+toolbar.insertBefore(loadBtn, toolbar.firstChild);
+toolbar.insertBefore(saveBtn, toolbar.firstChild);
+
+// Save Project
+saveBtn.onclick = () => {
   localStorage.setItem("mindforge_project", JSON.stringify({
     html: htmlCode.textContent,
     css: cssCode.textContent,
@@ -87,9 +102,8 @@ document.getElementById("saveProject").onclick = () => {
   alert("Project saved to browser.");
 };
 
-// Load from localStorage
-document.getElementById("saveProject").insertAdjacentHTML("afterend", '<button id="loadProject" style="margin-left:10px;">📂 Load</button>');
-document.getElementById("loadProject").onclick = () => {
+// Load Project
+loadBtn.onclick = () => {
   const data = localStorage.getItem("mindforge_project");
   if (!data) return alert("No saved project found.");
   const { html, css, js } = JSON.parse(data);
@@ -100,6 +114,7 @@ document.getElementById("loadProject").onclick = () => {
   Prism.highlightAll();
 };
 
+// Code Tabs
 document.querySelectorAll(".tab").forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
