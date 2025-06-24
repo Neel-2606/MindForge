@@ -189,4 +189,3 @@ if (viewCodeBtn) {
     document.getElementById("codeModal").style.display = "flex";
   });
 }
-
