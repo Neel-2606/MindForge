@@ -156,18 +156,11 @@ toolbar.appendChild(deployBtn);
 const viewCodeBtn = document.createElement("button");
 viewCodeBtn.innerText = "📄 View Code Files";
 viewCodeBtn.onclick = () => {
+  // Inject code into modal
+  document.getElementById("code-html-view").textContent = htmlCode.textContent;
+  document.getElementById("code-css-view").textContent = cssCode.textContent;
+  document.getElementById("code-js-view").textContent = jsCode.textContent;
+  // Show modal
   document.getElementById("codeModal").style.display = "flex";
 };
 toolbar.appendChild(viewCodeBtn);
-
-
-// Tab switching
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.onclick = () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    htmlCode.style.display = tab.dataset.tab === "html" ? "block" : "none";
-    cssCode.style.display = tab.dataset.tab === "css" ? "block" : "none";
-    jsCode.style.display = tab.dataset.tab === "js" ? "block" : "none";
-  };
-});
