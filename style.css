@@ -244,6 +244,7 @@ pre {
   margin-top: 40px;
   border-top: 1px solid #eee;
 }
+
 /* 🔥 Custom Grid Layout for Tools & FAQ */
 .tool-grid,
 .faq-grid {
@@ -284,5 +285,24 @@ pre {
     transform: translateY(0);
   }
 }
+
+
+/* ✅ Scrollable Code Blocks in Code Modal */
+#codeModal pre {
+  max-height: 400px;
+  overflow: auto;
+  padding: 15px;
+  font-size: 14px;
+  background: #0e0e0e;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#codeModal pre code {
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 
 
