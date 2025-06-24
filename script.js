@@ -21,14 +21,20 @@ cards.forEach(card => {
   };
 });
 
-// Handle navbar "Build" click
+// "Start Building" and navbar Build
 document.querySelector('a[href="#build"]').addEventListener("click", e => {
   e.preventDefault();
   buildSection.style.display = "block";
   buildSection.scrollIntoView({ behavior: "smooth" });
 });
 
-// Generate preview
+const startBtn = document.getElementById("startBtn");
+startBtn.onclick = () => {
+  buildSection.style.display = "block";
+  buildSection.scrollIntoView({ behavior: "smooth" });
+};
+
+// Generate Preview
 generateBtn.onclick = () => {
   const prompt = promptInput.value.trim();
   if (!prompt) return alert("Please enter your project idea.");
@@ -40,37 +46,25 @@ generateBtn.onclick = () => {
   const css = `body { font-family: Poppins; padding: 30px; background: #f9f9f9; color: #111; }`;
   const js = `console.log("Generated for: ${prompt}");`;
 
-  // Load in preview
   previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
 
-  // Save in preview tabs
   htmlCode.textContent = html;
   cssCode.textContent = css;
   jsCode.textContent = js;
 
-  // Also update code file modal content 👇
-  document.getElementById("code-html-view").textContent = html;
-  document.getElementById("code-css-view").textContent = css;
-  document.getElementById("code-js-view").textContent = js;
+  // Update modal content as well
+  document.getElementById("code-html-view").innerHTML = `<code class="language-html">${html}</code>`;
+  document.getElementById("code-css-view").innerHTML = `<code class="language-css">${css}</code>`;
+  document.getElementById("code-js-view").innerHTML = `<code class="language-js">${js}</code>`;
 
   Prism.highlightAll();
 };
 
-
-const startBtn = document.getElementById("startBtn");
-
-startBtn.onclick = () => {
-  buildSection.style.display = "block";
-  buildSection.scrollIntoView({ behavior: "smooth" });
-};
-
-
-// Toolbar buttons (dynamically injected)
+// Inject toolbar buttons
 const toolbar = document.querySelector(".toolbar");
 
-// 💾 Save
+// Save
 const saveBtn = document.createElement("button");
-saveBtn.id = "saveProject";
 saveBtn.innerText = "💾 Save";
 saveBtn.onclick = () => {
   localStorage.setItem("mindforge_project", JSON.stringify({
@@ -82,9 +76,8 @@ saveBtn.onclick = () => {
 };
 toolbar.appendChild(saveBtn);
 
-// 📂 Load
+// Load
 const loadBtn = document.createElement("button");
-loadBtn.id = "loadProject";
 loadBtn.innerText = "📂 Load";
 loadBtn.onclick = () => {
   const data = localStorage.getItem("mindforge_project");
@@ -98,9 +91,8 @@ loadBtn.onclick = () => {
 };
 toolbar.appendChild(loadBtn);
 
-// 📱 Toggle Device
+// Toggle Device
 const toggleDeviceBtn = document.createElement("button");
-toggleDeviceBtn.id = "toggleDevice";
 toggleDeviceBtn.innerText = "📱 Toggle Device";
 toggleDeviceBtn.onclick = () => {
   isMobile = !isMobile;
@@ -108,25 +100,22 @@ toggleDeviceBtn.onclick = () => {
 };
 toolbar.appendChild(toggleDeviceBtn);
 
-// 🔍 Fullscreen
+// Fullscreen
 const fullscreenBtn = document.createElement("button");
-fullscreenBtn.id = "fullscreenToggle";
 fullscreenBtn.innerText = "🔍 Fullscreen";
 fullscreenBtn.onclick = () => {
   document.getElementById("previewPane").classList.toggle("fullscreen");
 };
 toolbar.appendChild(fullscreenBtn);
 
-// 🔁 Regenerate
+// Regenerate
 const regenerateBtn = document.createElement("button");
-regenerateBtn.id = "regenerateBtn";
 regenerateBtn.innerText = "🔁 Regenerate";
 regenerateBtn.onclick = () => generateBtn.click();
 toolbar.appendChild(regenerateBtn);
 
-// ⬇️ Download
+// Download
 const downloadBtn = document.createElement("button");
-downloadBtn.id = "downloadBtn";
 downloadBtn.innerText = "⬇️ Download";
 downloadBtn.onclick = () => {
   const zipContent = `
@@ -143,9 +132,8 @@ downloadBtn.onclick = () => {
 };
 toolbar.appendChild(downloadBtn);
 
-// 🌓 Theme Toggle
+// Theme toggle
 const themeToggleBtn = document.createElement("button");
-themeToggleBtn.id = "themeToggle";
 themeToggleBtn.innerText = "🌓 Toggle Theme";
 themeToggleBtn.onclick = () => {
   document.body.classList.toggle("light");
@@ -153,7 +141,7 @@ themeToggleBtn.onclick = () => {
 };
 toolbar.appendChild(themeToggleBtn);
 
-// 🌐 How to Deploy
+// Deploy instructions
 const deployBtn = document.createElement("button");
 deployBtn.innerText = "🌐 How to Deploy";
 deployBtn.onclick = () => {
@@ -161,31 +149,25 @@ deployBtn.onclick = () => {
 };
 toolbar.appendChild(deployBtn);
 
-// 📄 View Code Files
+// View Code Files
 const viewCodeBtn = document.createElement("button");
 viewCodeBtn.innerText = "📄 View Code Files";
 viewCodeBtn.onclick = () => {
-  // Inject code into modal with <code> for Prism and scrolling
-  document.getElementById("code-html-view").innerHTML = `<code class="language-html">${htmlCode.textContent || ""}</code>`;
-  document.getElementById("code-css-view").innerHTML = `<code class="language-css">${cssCode.textContent || ""}</code>`;
-  document.getElementById("code-js-view").innerHTML = `<code class="language-js">${jsCode.textContent || ""}</code>`;
-
-  Prism.highlightAll(); // syntax highlight
+  document.getElementById("code-html-view").innerHTML = `<code class="language-html">${htmlCode.textContent}</code>`;
+  document.getElementById("code-css-view").innerHTML = `<code class="language-css">${cssCode.textContent}</code>`;
+  document.getElementById("code-js-view").innerHTML = `<code class="language-js">${jsCode.textContent}</code>`;
+  Prism.highlightAll();
   document.getElementById("codeModal").style.display = "flex";
 };
 toolbar.appendChild(viewCodeBtn);
 
-// 📄 View Code Files button functionality
-const viewCodeBtn = document.querySelector('button:contains("📄 View Code Files")');
-const htmlView = document.getElementById("code-html-view");
-const cssView = document.getElementById("code-css-view");
-const jsView = document.getElementById("code-js-view");
-
-if (viewCodeBtn) {
-  viewCodeBtn.addEventListener("click", () => {
-    htmlView.textContent = htmlCode.textContent || "";
-    cssView.textContent = cssCode.textContent || "";
-    jsView.textContent = jsCode.textContent || "";
-    document.getElementById("codeModal").style.display = "flex";
-  });
-}
+// Tab switching (optional for future)
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    htmlCode.style.display = tab.dataset.tab === "html" ? "block" : "none";
+    cssCode.style.display = tab.dataset.tab === "css" ? "block" : "none";
+    jsCode.style.display = tab.dataset.tab === "js" ? "block" : "none";
+  };
+});
