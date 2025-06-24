@@ -165,11 +165,12 @@ toolbar.appendChild(deployBtn);
 const viewCodeBtn = document.createElement("button");
 viewCodeBtn.innerText = "📄 View Code Files";
 viewCodeBtn.onclick = () => {
-  // Inject code into modal
-  document.getElementById("code-html-view").textContent = htmlCode.textContent;
-  document.getElementById("code-css-view").textContent = cssCode.textContent;
-  document.getElementById("code-js-view").textContent = jsCode.textContent;
-  // Show modal
+  // Inject code into modal with <code> for Prism and scrolling
+  document.getElementById("code-html-view").innerHTML = `<code class="language-html">${htmlCode.textContent || ""}</code>`;
+  document.getElementById("code-css-view").innerHTML = `<code class="language-css">${cssCode.textContent || ""}</code>`;
+  document.getElementById("code-js-view").innerHTML = `<code class="language-js">${jsCode.textContent || ""}</code>`;
+
+  Prism.highlightAll(); // syntax highlight
   document.getElementById("codeModal").style.display = "flex";
 };
 toolbar.appendChild(viewCodeBtn);
