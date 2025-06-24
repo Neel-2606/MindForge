@@ -173,3 +173,19 @@ viewCodeBtn.onclick = () => {
   document.getElementById("codeModal").style.display = "flex";
 };
 toolbar.appendChild(viewCodeBtn);
+
+// 📄 View Code Files button functionality
+const viewCodeBtn = document.querySelector('button:contains("📄 View Code Files")');
+const htmlView = document.getElementById("code-html-view");
+const cssView = document.getElementById("code-css-view");
+const jsView = document.getElementById("code-js-view");
+
+if (viewCodeBtn) {
+  viewCodeBtn.addEventListener("click", () => {
+    htmlView.textContent = htmlCode.textContent || "";
+    cssView.textContent = cssCode.textContent || "";
+    jsView.textContent = jsCode.textContent || "";
+    document.getElementById("codeModal").style.display = "flex";
+  });
+}
+
