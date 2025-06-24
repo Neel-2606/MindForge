@@ -40,13 +40,22 @@ generateBtn.onclick = () => {
   const css = `body { font-family: Poppins; padding: 30px; background: #f9f9f9; color: #111; }`;
   const js = `console.log("Generated for: ${prompt}");`;
 
+  // Load in preview
   previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+
+  // Save in preview tabs
   htmlCode.textContent = html;
   cssCode.textContent = css;
   jsCode.textContent = js;
 
+  // Also update code file modal content 👇
+  document.getElementById("code-html-view").textContent = html;
+  document.getElementById("code-css-view").textContent = css;
+  document.getElementById("code-js-view").textContent = js;
+
   Prism.highlightAll();
 };
+
 
 const startBtn = document.getElementById("startBtn");
 
