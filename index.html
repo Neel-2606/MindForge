@@ -122,6 +122,25 @@
     </p>
   </section>
 
+  <!-- 📄 View Code Modal -->
+<div id="codeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; overflow-y:auto; padding:40px 20px;">
+  <div style="background:#1e1e1e; color:#fff; padding:30px; border-radius:12px; max-width:900px; margin:auto;">
+    <h2>📁 Generated Code Files</h2>
+
+    <h3 style="color:#00fff0;">index.html</h3>
+    <pre style="background:#111; padding:12px; border-radius:8px; overflow:auto;" id="code-html-view"></pre>
+
+    <h3 style="margin-top:30px; color:#00fff0;">style.css</h3>
+    <pre style="background:#111; padding:12px; border-radius:8px; overflow:auto;" id="code-css-view"></pre>
+
+    <h3 style="margin-top:30px; color:#00fff0;">script.js</h3>
+    <pre style="background:#111; padding:12px; border-radius:8px; overflow:auto;" id="code-js-view"></pre>
+
+    <button onclick="document.getElementById('codeModal').style.display='none'" style="margin-top:30px; background:#00fff0; color:black; font-weight:bold; border:none; padding:10px 20px; border-radius:8px;">Close</button>
+  </div>
+</div>
+
+
 <!-- ✅ Privacy Policy Section -->
 <section id="privacy" class="build-section" style="padding: 60px 20px;">
   <h2 style="font-size: 36px; margin-bottom: 20px;">🔒 Privacy & Policy</h2>
@@ -220,7 +239,7 @@
     <ol style="padding-left: 20px;">
       <li>Visit <a href="https://vercel.com" target="_blank">vercel.com</a> and log in.</li>
       <li>Click <strong>New Project</strong> → Import your GitHub repo.</li>
-      <li>It auto-deploys your site with a free `.vercel.app` domain.</li>
+      <li>It auto-deploys your site with a free .vercel.app domain.</li>
     </ol>
     <p><em>⚙️ Ideal for advanced web apps or AI integrations.</em></p>
 
@@ -255,3 +274,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+
+
+

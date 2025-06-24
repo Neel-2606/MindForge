@@ -152,6 +152,15 @@ deployBtn.onclick = () => {
 };
 toolbar.appendChild(deployBtn);
 
+// 📄 View Code Files
+const viewCodeBtn = document.createElement("button");
+viewCodeBtn.innerText = "📄 View Code Files";
+viewCodeBtn.onclick = () => {
+  document.getElementById("codeModal").style.display = "flex";
+};
+toolbar.appendChild(viewCodeBtn);
+
+
 // Tab switching
 document.querySelectorAll(".tab").forEach(tab => {
   tab.onclick = () => {
