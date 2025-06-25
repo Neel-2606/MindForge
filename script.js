@@ -38,27 +38,45 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // ⚙️ Generate Project
-  generateBtn.addEventListener("click", () => {
-    const prompt = promptInput.value.trim();
-    if (!prompt) return alert("Please enter your project idea.");
+  generateBtn.onclick = async () => {
+  const prompt = promptInput.value.trim();
+  if (!prompt) return alert("Please enter your project idea.");
 
-    previewArea.style.display = "block";
-    previewArea.scrollIntoView({ behavior: "smooth" });
+  previewArea.style.display = "block";
+  previewArea.scrollIntoView({ behavior: "smooth" });
 
-    const html = `<h1>${selectedType} Preview</h1><p>${prompt}</p>`;
-    const css = `body { font-family: Poppins; padding: 30px; background: #f9f9f9; color: #111; }`;
-    const js = `console.log("Generated for: ${prompt}");`;
+  // Show loading
+  previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">⏳ Generating...</body>`;
 
-    previewFrame.srcdoc = `<html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-    htmlCode.textContent = html;
-    cssCode.textContent = css;
-    jsCode.textContent = js;
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, type: selectedType }),
+    });
 
-    document.getElementById("code-html-view").innerHTML = `<code class="language-html">${html}</code>`;
-    document.getElementById("code-css-view").innerHTML = `<code class="language-css">${css}</code>`;
-    document.getElementById("code-js-view").innerHTML = `<code class="language-js">${js}</code>`;
+    const data = await res.json();
+    const output = data.code;
+
+    if (!output) throw new Error("No code returned");
+
+    previewFrame.srcdoc = output;
+
+    // Optional: you can split HTML/CSS/JS from output using markers later
+    htmlCode.textContent = output;
+    cssCode.textContent = "/* CSS included in HTML for now */";
+    jsCode.textContent = "// JS included in HTML for now";
+
+    document.getElementById("code-html-view").textContent = output;
+
     Prism.highlightAll();
-  });
+  } catch (err) {
+    previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">❌ Error generating. Try again.</body>`;
+    console.error(err);
+    alert("Failed to generate project. Please try again.");
+  }
+};
+
 
   // 🔘 Toolbar Buttons Setup
   const toolButtons = [
