@@ -1,46 +1,33 @@
-// File: /api/generate.js
+import { Configuration, OpenAIApi } from "openai";
+
+const config = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAIApi(config);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
 
   const { prompt, type } = req.body;
-
-  if (!prompt || !type) {
-    return res.status(400).json({ error: "Prompt and type are required" });
-  }
+  if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo", // use "gpt-4" if your key supports it
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert ${type.toLowerCase()} developer. Generate clean HTML, CSS, and JS code as required.`,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-      }),
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "You are a helpful assistant generating frontend project code." },
+        { role: "user", content: `Make ${type} based on prompt: ${prompt}. Provide full HTML+CSS+JS in one HTML doc.` }
+      ],
     });
 
-    const data = await response.json();
-    const aiOutput = data.choices[0]?.message?.content;
+    if (!completion.data.choices?.[0]?.message?.content) {
+      console.error("OpenAI returned empty content:", completion.data);
+      return res.status(500).json({ error: "Empty content from OpenAI", details: completion.data });
+    }
 
-    return res.status(200).json({ code: aiOutput });
+    const code = completion.data.choices[0].message.content;
+    return res.status(200).json({ code });
+
   } catch (err) {
-    return res.status(500).json({ error: "AI request failed", details: err.message });
+    console.error("🛑 /api/generate Error:", err.response?.data || err.message || err);
+    return res.status(500).json({ error: "OpenAI API error", details: err.response?.data || err.message });
   }
 }
