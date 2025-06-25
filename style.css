@@ -312,11 +312,12 @@ pre {
   }
 
   .hero-left h1 {
-    font-size: 32px;
+    font-size: 30px;
+    margin-bottom: 10px;
   }
 
   .hero-left p {
-    font-size: 16px;
+    font-size: 15px;
     margin-bottom: 20px;
   }
 
@@ -324,11 +325,38 @@ pre {
     grid-template-columns: 1fr;
     gap: 15px;
     width: 100%;
+    margin-top: 20px;
+  }
+
+  .hero-right .card {
+    width: 100%;
+    font-size: 16px;
+    padding: 20px;
   }
 
   #promptInput {
     width: 100%;
     height: 100px;
+    font-size: 15px;
+  }
+
+  #generateBtn, #startBtn {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px;
+    margin-top: 10px;
+  }
+
+  .toolbar {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .toolbar button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
   }
 
   .workspace {
@@ -339,35 +367,29 @@ pre {
     height: 300px;
   }
 
-  .toolbar {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .toolbar button {
-    width: 100%;
-    margin: 5px 0;
-  }
-
   .code-tabs {
     justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
   }
 
   .code-pane {
-    padding: 5px;
+    padding: 8px;
   }
 
   .tab {
     padding: 8px 12px;
     font-size: 14px;
+    flex: 1 1 auto;
   }
 
   footer {
     padding: 20px;
     font-size: 14px;
+    text-align: center;
+  }
+
+  .tool-grid,
+  .faq-grid {
+    grid-template-columns: 1fr;
   }
 }
-
-
