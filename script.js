@@ -39,7 +39,80 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ⚙️ Generate Project
   generateBtn.onclick = async () => {
-    const prompt = promptInput.value.trim();
+    let basePrompt = promptInput.value.trim();
+
+let styledPrompt = "";
+
+if (selectedType === "Website") {
+  styledPrompt = `
+You are an expert web developer.
+Generate a modern, responsive HTML+CSS website based on the following description:
+- Use internal CSS (inside <style>) for styling.
+- Add a hero section, multiple content sections, and clean layout.
+- Make it mobile-friendly.
+- No external libraries.
+
+User prompt: ${basePrompt}
+`;
+}
+else if (selectedType === "Mobile App") {
+  styledPrompt = `
+You're a UI/UX expert. 
+Generate a responsive mobile app UI layout using HTML and CSS (simulating mobile app layout in browser).
+- Design a top navbar, content area, and bottom nav bar.
+- Style it to look like a native mobile app interface.
+- Use internal <style> CSS.
+- No external libraries.
+
+App description: ${basePrompt}
+`;
+}
+else if (selectedType === "Game") {
+  styledPrompt = `
+You're a game developer using HTML/JS/CSS.
+Create a basic game layout (like Tic-Tac-Toe or platformer).
+- Include styled HTML layout and interactive JavaScript.
+- Add start button, canvas or grid, and a basic game loop.
+- Style nicely using internal CSS.
+- No external libraries.
+
+Game idea: ${basePrompt}
+`;
+}
+else if (selectedType === "AI Tool") {
+  styledPrompt = `
+Generate a responsive AI-based tool UI in HTML/CSS/JS.
+- Add input fields, output area, and buttons.
+- Make it clean, minimal, and styled.
+- Use internal CSS and JavaScript logic inside <script> tag.
+- No external libraries.
+
+Tool description: ${basePrompt}
+`;
+}
+else if (selectedType === "API") {
+  styledPrompt = `
+Simulate an API documentation or interactive API testing UI.
+- Create a layout in HTML/CSS with input fields, send button, and response area.
+- Use JavaScript to simulate a fetch request and display dummy JSON.
+- Style it clearly for developers.
+
+API idea: ${basePrompt}
+`;
+}
+else {
+  styledPrompt = `
+You're a creative AI coder. Generate a styled and working project in HTML, CSS, and JS based on this prompt:
+${basePrompt}
+
+Requirements:
+- Responsive design
+- Internal CSS
+- Clean, modern layout
+- No external libraries
+`;
+}
+
     if (!prompt) return alert("Please enter your project idea.");
 
     previewArea.style.display = "block";
