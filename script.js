@@ -140,46 +140,6 @@ ${userInput}`;
     alert("Failed to generate project. Please try again.");
   }
 };
-
-
-    if (!prompt) return alert("Please enter your project idea.");
-
-    previewArea.style.display = "block";
-    previewArea.scrollIntoView({ behavior: "smooth" });
-
-    previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">⏳ Generating...</body>`;
-
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, type: selectedType }),
-      });
-
-      const data = await res.json();
-      const output = data.code;
-
-      if (!output) throw new Error("No code returned");
-
-      // Load output into iframe
-      previewFrame.srcdoc = output;
-
-      // Show HTML in code viewer
-      htmlCode.textContent = output;
-      cssCode.textContent = "/* CSS included inside HTML */";
-      jsCode.textContent = "// JS included inside HTML";
-
-      // Show code in modal viewer
-      document.getElementById("code-html-view").textContent = output;
-
-      Prism.highlightAll();
-    } catch (err) {
-      console.error("Error generating:", err);
-      previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">❌ Error generating. Try again.</body>`;
-      alert("Failed to generate project. Try again or check backend.");
-    }
-  };
-
   // 🛠 Toolbar Buttons
   const toolButtons = [
     {
