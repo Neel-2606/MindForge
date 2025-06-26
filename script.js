@@ -168,18 +168,43 @@ User's Request: Generate a ${selectedType} for a user that wants: ${userInput}
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: geminiPrompt }), // Send the new prompt
+        body: JSON.stringify({ prompt: geminiPrompt }),
       });
 
+      // Check if the HTTP response itself was successful
+      if (!res.ok) {
+        const errorText = await res.text(); // Get raw error response
+        console.error("API Response Error:", res.status, errorText);
+        previewFrame.srcdoc = `<body style="padding:50px; background:#111; color:white;">
+          <h1 style="color:#ff4444;">❌ Server Error</h1>
+          <p>MindForge encountered an issue connecting to the AI service. Please try again.</p>
+          <p>Status: ${res.status}</p>
+          <p>Error: ${errorText.substring(0, 200)}...</p>
+        </body>`;
+        alert(`Server error: ${res.status}. Check console for details.`);
+        return; // Stop execution here
+      }
+
       const data = await res.json();
-      let output = data.code;
+      console.log("Full API Response Data:", data); // ⭐ IMPORTANT DEBUGGING STEP ⭐
+
+      // Safely access data.code, ensuring it's a string
+      let output = typeof data.code === 'string' ? data.code : '';
+
+      // If data.code is not a string, or is empty, try data.text as a fallback, or another likely property
+      if (!output && typeof data.text === 'string') {
+          output = data.text;
+      }
+      // If the response is directly the string (not an object with a 'code' or 'text' property)
+      if (!output && typeof data === 'string') {
+        output = data;
+      }
 
       // ⭐ IMPROVED PARSING OF GEMINI'S MARKDOWN OUTPUT ⭐
-      // Use regex to find content inside the ```html ... ``` block
       const htmlMatch = output.match(/```html\s*([\s\S]*?)\s*```/);
       let extractedHtml = htmlMatch ? htmlMatch[1].trim() : '';
 
-      // Fallback if no valid HTML block is found (e.g., Gemini returns an error message)
+      // Fallback if no valid HTML block is found (e.g., Gemini returns an error message or partial output)
       if (!extractedHtml || extractedHtml.trim().length < 50) {
         extractedHtml = `
 <!DOCTYPE html>
@@ -197,7 +222,7 @@ h1 { color:#00fff0; }
 <p>The AI did not return a complete or valid HTML structure. This can happen if the prompt was too complex or if there was an internal AI issue.</p>
 <p>Please try a simpler prompt or regenerate.</p>
 <p>Original AI Response (for debugging):</p>
-<pre style="text-align:left; background:#222; padding:15px; border-radius:8px; overflow-x:auto;">${output}</pre>
+<pre style="text-align:left; background:#222; padding:15px; border-radius:8px; overflow-x:auto;">${output || JSON.stringify(data, null, 2)}</pre>
 </body>
 </html>`;
       }
@@ -230,13 +255,14 @@ h1 { color:#00fff0; }
       Prism.highlightAll();
 
     } catch (err) {
-      console.error("Gemini Error:", err);
+      console.error("Gemini Frontend Error:", err); // More specific error message
       previewFrame.srcdoc = `<body style="padding:50px; background:#111; color:white;">
         <h1 style="color:#ff4444;">❌ Generation Failed</h1>
-        <p>An error occurred while communicating with the AI. Please check your network connection or try again later.</p>
+        <p>An error occurred in your browser while processing the AI response. This could be a network issue or a problem with the AI's output format.</p>
         <p>Error details: ${err.message}</p>
+        <p>Please check the browser console for more technical details.</p>
       </body>`;
-      alert("Error generating. Please try again.");
+      alert("Error generating. Please try again and check your browser's console for details.");
     }
   };
 
