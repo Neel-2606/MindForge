@@ -37,81 +37,110 @@ document.addEventListener("DOMContentLoaded", function () {
     buildSection.scrollIntoView({ behavior: "smooth" });
   });
 
-  // ⚙️ Generate Project
   generateBtn.onclick = async () => {
-    let basePrompt = promptInput.value.trim();
+  const userInput = promptInput.value.trim();
+  if (!userInput) return alert("Please enter your project idea.");
 
-let styledPrompt = "";
+  previewArea.style.display = "block";
+  previewArea.scrollIntoView({ behavior: "smooth" });
 
-if (selectedType === "Website") {
-  styledPrompt = `
-You are an expert web developer.
-Generate a modern, responsive HTML+CSS website based on the following description:
-- Use internal CSS (inside <style>) for styling.
-- Add a hero section, multiple content sections, and clean layout.
-- Make it mobile-friendly.
-- No external libraries.
+  previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">⏳ Generating...</body>`;
 
-User prompt: ${basePrompt}
-`;
-}
-else if (selectedType === "Mobile App") {
-  styledPrompt = `
-You're a UI/UX expert. 
-Generate a responsive mobile app UI layout using HTML and CSS (simulating mobile app layout in browser).
-- Design a top navbar, content area, and bottom nav bar.
-- Style it to look like a native mobile app interface.
-- Use internal <style> CSS.
-- No external libraries.
+  let styledPrompt = "";
 
-App description: ${basePrompt}
-`;
-}
-else if (selectedType === "Game") {
-  styledPrompt = `
-You're a game developer using HTML/JS/CSS.
-Create a basic game layout (like Tic-Tac-Toe or platformer).
-- Include styled HTML layout and interactive JavaScript.
-- Add start button, canvas or grid, and a basic game loop.
-- Style nicely using internal CSS.
-- No external libraries.
+  // 🧠 Smart Prompt Template Based on Type
+  switch (selectedType) {
+    case "Website":
+      styledPrompt = `Generate a fully responsive, modern HTML portfolio website with internal CSS.
+It should include:
+- A hero section with title and intro
+- 3 project cards (image, title, desc)
+- Clean layout, styled with internal <style> tag
+- No external CSS or JS
 
-Game idea: ${basePrompt}
-`;
-}
-else if (selectedType === "AI Tool") {
-  styledPrompt = `
-Generate a responsive AI-based tool UI in HTML/CSS/JS.
-- Add input fields, output area, and buttons.
-- Make it clean, minimal, and styled.
-- Use internal CSS and JavaScript logic inside <script> tag.
-- No external libraries.
+User wants: ${userInput}`;
+      break;
 
-Tool description: ${basePrompt}
-`;
-}
-else if (selectedType === "API") {
-  styledPrompt = `
-Simulate an API documentation or interactive API testing UI.
-- Create a layout in HTML/CSS with input fields, send button, and response area.
-- Use JavaScript to simulate a fetch request and display dummy JSON.
-- Style it clearly for developers.
+    case "Mobile App":
+      styledPrompt = `Create a mobile-style HTML/CSS UI that looks like a native mobile app.
+- Include a top navbar, content section, and bottom nav bar
+- Use only internal CSS for styling
+- Simulate an app layout inside the browser
 
-API idea: ${basePrompt}
-`;
-}
-else {
-  styledPrompt = `
-You're a creative AI coder. Generate a styled and working project in HTML, CSS, and JS based on this prompt:
-${basePrompt}
+App idea: ${userInput}`;
+      break;
 
-Requirements:
-- Responsive design
-- Internal CSS
-- Clean, modern layout
+    case "Game":
+      styledPrompt = `Build a simple game in HTML, CSS, and JavaScript.
+- Include UI layout and game logic
+- Use internal <style> and <script> blocks
+- Examples: Tic-Tac-Toe, Rock Paper Scissors, or similar
+
+Game idea: ${userInput}`;
+      break;
+
+    case "AI Bot":
+      styledPrompt = `Design an AI chatbot UI using HTML, CSS, and JS.
+- Should include input box, chat window, and send button
+- Add styles to make it clean and responsive
+- JS should simulate basic bot reply
+
+Bot idea: ${userInput}`;
+      break;
+
+    case "API":
+      styledPrompt = `Create a styled API tester tool in HTML, CSS, and JavaScript.
+- Include fields for URL, method, and headers
+- Button to send request (simulate with dummy fetch)
+- Response display area
+- Use internal CSS, no external frameworks
+
+Tool idea: ${userInput}`;
+      break;
+
+    case "AI Tool":
+      styledPrompt = `Create a web-based AI utility tool using HTML, CSS, and JS.
+- Include input area, output display, and submit button
+- Clean, responsive UI
+- Internal CSS and inline JS
 - No external libraries
-`;
-}
+
+Tool idea: ${userInput}`;
+      break;
+
+    default:
+      styledPrompt = `Generate a complete, styled HTML+CSS+JS layout for this idea:
+${userInput}`;
+  }
+
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: styledPrompt, type: selectedType }),
+    });
+
+    const data = await res.json();
+    const output = data.code;
+
+    if (!output) throw new Error("No code returned");
+
+    // ✅ Load into preview + code viewer
+    previewFrame.srcdoc = output;
+    htmlCode.textContent = output;
+    cssCode.textContent = "/* CSS is included in HTML */";
+    jsCode.textContent = "// JS is inside HTML";
+
+    document.getElementById("code-html-view").textContent = output;
+    Prism.highlightAll();
+
+  } catch (err) {
+    console.error("Generation Error:", err);
+    previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">❌ Error generating. Try again.</body>`;
+    alert("Failed to generate project. Please try again.");
+  }
+};
+
 
     if (!prompt) return alert("Please enter your project idea.");
 
