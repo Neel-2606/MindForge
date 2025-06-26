@@ -37,82 +37,29 @@ document.addEventListener("DOMContentLoaded", function () {
     buildSection.scrollIntoView({ behavior: "smooth" });
   });
 
-  // ⚙️ Generate Project
+  // 🚀 Generate Button
   generateBtn.onclick = async () => {
     const userInput = promptInput.value.trim();
     if (!userInput) return alert("Please enter your project idea.");
 
     previewArea.style.display = "block";
     previewArea.scrollIntoView({ behavior: "smooth" });
-
     previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">⏳ Generating...</body>`;
 
-    let styledPrompt = "";
+    // ✨ Smart Gemini Prompt
+    const styledPrompt = `
+You are a senior front-end developer.
+Generate a complete, beautiful, responsive HTML project using ONLY internal CSS and JavaScript.
+Your output MUST:
+- Include full <!DOCTYPE html>, <html>, <head>, <body>
+- Use a <style> tag for internal CSS
+- Use a <script> tag for interactive features
+- Be fully styled and look modern
+- NOT use any external files or libraries
 
-    // 🎯 Smart Prompt per type
-    switch (selectedType) {
-      case "Website":
-        styledPrompt = `Generate a fully responsive, modern HTML portfolio website with internal CSS.
-It should include:
-- A hero section with title and intro
-- 3 project cards (image, title, desc)
-- Clean layout, styled with internal <style> tag
-- No external CSS or JS
-
-User wants: ${userInput}`;
-        break;
-
-      case "Mobile App":
-        styledPrompt = `Create a mobile-style HTML/CSS UI that looks like a native mobile app.
-- Include a top navbar, content section, and bottom nav bar
-- Use only internal CSS for styling
-- Simulate an app layout inside the browser
-
-App idea: ${userInput}`;
-        break;
-
-      case "Game":
-        styledPrompt = `Build a simple game in HTML, CSS, and JavaScript.
-- Include UI layout and game logic
-- Use internal <style> and <script> blocks
-- Examples: Tic-Tac-Toe, Rock Paper Scissors, or similar
-
-Game idea: ${userInput}`;
-        break;
-
-      case "AI Bot":
-        styledPrompt = `Design an AI chatbot UI using HTML, CSS, and JS.
-- Should include input box, chat window, and send button
-- Add styles to make it clean and responsive
-- JS should simulate basic bot reply
-
-Bot idea: ${userInput}`;
-        break;
-
-      case "API":
-        styledPrompt = `Create a styled API tester tool in HTML, CSS, and JavaScript.
-- Include fields for URL, method, and headers
-- Button to send request (simulate with dummy fetch)
-- Response display area
-- Use internal CSS, no external frameworks
-
-Tool idea: ${userInput}`;
-        break;
-
-      case "AI Tool":
-        styledPrompt = `Create a web-based AI utility tool using HTML, CSS, and JS.
-- Include input area, output display, and submit button
-- Clean, responsive UI
-- Internal CSS and inline JS
-- No external libraries
-
-Tool idea: ${userInput}`;
-        break;
-
-      default:
-        styledPrompt = `Generate a complete, styled HTML+CSS+JS layout for this idea:
-${userInput}`;
-    }
+User wants a ${selectedType}:
+${userInput}
+    `;
 
     try {
       const res = await fetch("/api/generate", {
@@ -122,27 +69,56 @@ ${userInput}`;
       });
 
       const data = await res.json();
-      const output = data.code;
+      let output = data.code;
 
-      if (!output) throw new Error("No code returned");
+      if (!output || output.trim().length < 50) {
+        output = `
+<!DOCTYPE html>
+<html><head><style>
+body { background:#111; color:white; font-family:sans-serif; padding:50px; text-align:center; }
+h1 { color:#00fff0; }
+</style></head>
+<body>
+<h1>⚠️ Generation Failed</h1>
+<p>The AI didn't return a valid template. Try changing your prompt or refreshing.</p>
+</body></html>`;
+      }
 
-      // ✅ Load into iframe
-      previewFrame.srcdoc = output;
+      // 🧠 Wrap if partial HTML
+      const fullOutput = output.trim().startsWith("<!DOCTYPE")
+        ? output
+        : `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MindForge Output</title>
+<style>
+  body { padding: 30px; font-family: sans-serif; background: #1b1b1b; color: #eee; }
+</style>
+</head>
+<body>
+${output}
+</body>
+</html>
+`;
+
+      // ✅ Load Preview
+      previewFrame.srcdoc = fullOutput;
       previewFrame.style.width = isMobile ? "375px" : "100%";
       previewFrame.style.height = "600px";
 
-      // ✅ Update code viewers
-      htmlCode.textContent = output;
-      cssCode.textContent = "/* CSS is included in HTML */";
-      jsCode.textContent = "// JS is inside HTML";
-
-      document.getElementById("code-html-view").textContent = output;
+      // ✅ Populate Code View
+      htmlCode.textContent = fullOutput;
+      cssCode.textContent = "/* CSS is inside the HTML */";
+      jsCode.textContent = "// JS is inside the HTML";
+      document.getElementById("code-html-view").textContent = fullOutput;
       Prism.highlightAll();
 
     } catch (err) {
-      console.error("Generation Error:", err);
-      previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">❌ Error generating. Try again.</body>`;
-      alert("Failed to generate project. Please try again.");
+      console.error("Gemini Error:", err);
+      previewFrame.srcdoc = `<body style="padding:50px;">❌ Generation failed. Try again.</body>`;
+      alert("Error generating. Please try again.");
     }
   };
 
@@ -166,7 +142,7 @@ ${userInput}`;
         htmlCode.textContent = proj.html;
         cssCode.textContent = proj.css;
         jsCode.textContent = proj.js;
-        previewFrame.srcdoc = `<html><head><style>${proj.css}</style></head><body>${proj.html}<script>${proj.js}<\/script></body></html>`;
+        previewFrame.srcdoc = `<html><head><style>${proj.css}</style></head><body>${proj.html}<script>${proj.js}</script></body></html>`;
         Prism.highlightAll();
       }
     },
@@ -186,7 +162,7 @@ ${userInput}`;
     },
     {
       text: "⬇️ Download", id: "downloadBtn", onClick: () => {
-        const zip = `<html><head><style>${cssCode.textContent}</style></head><body>${htmlCode.textContent}<script>${jsCode.textContent}<\/script></body></html>`;
+        const zip = `<!DOCTYPE html><html><head><style>${cssCode.textContent}</style></head><body>${htmlCode.textContent}<script>${jsCode.textContent}</script></body></html>`;
         const blob = new Blob([zip], { type: "text/html" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -224,3 +200,4 @@ ${userInput}`;
     toolbar.appendChild(el);
   });
 });
+
