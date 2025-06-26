@@ -44,7 +44,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
     previewArea.style.display = "block";
     previewArea.scrollIntoView({ behavior: "smooth" });
-    previewFrame.srcdoc = `<body style="padding:50px; font-family:sans-serif;">⏳ Generating...</body>`;
+    previewFrame.srcdoc = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      height: 100vh;
+      background: #0f0f0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .loader {
+      font-size: 30px;
+      font-weight: bold;
+      color: #00fff0;
+      text-shadow: 0 0 10px rgba(0, 255, 240, 0.6);
+      animation: pulse 1.5s ease-in-out infinite, pop 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      80% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader">⏳ Generating with AI...</div>
+</body>
+</html>
+`;
 
     // ✨ Smart Gemini Prompt
     const styledPrompt = `
