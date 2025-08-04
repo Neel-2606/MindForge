@@ -1,93 +1,112 @@
 export default async function handler(req, res) {
   // Set CORS headers for Vercel deployment
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
 
   // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" })
   }
 
-  const { prompt, type, preferredAPI } = req.body;
+  try {
+    const { prompt, type, preferredAPI } = req.body
 
-  if (!prompt || !type) {
-    return res.status(400).json({ error: "Prompt and type are required" });
-  }
+    if (!prompt || !type) {
+      return res.status(400).json({ error: "Prompt and type are required" })
+    }
 
-  // Get API keys from environment variables
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  const mistralApiKey = process.env.MISTRAL_API_KEY;
-  const huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY;
+    // Get API keys from environment variables with enhanced debugging
+    const geminiApiKey = process.env.GEMINI_API_KEY
+    const mistralApiKey = process.env.MISTRAL_API_KEY
+    const huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY
 
-  // Check if at least one API key is available
-  if (!geminiApiKey && !mistralApiKey && !huggingFaceApiKey) {
-    console.error("No API keys found in environment variables");
-    return res.status(500).json({ 
-      error: "No API keys configured. Please set at least one of: GEMINI_API_KEY, MISTRAL_API_KEY, or HUGGING_FACE_API_KEY in your environment variables." 
-    });
-  }
+    // Enhanced logging for debugging
+    console.log("Environment check:", {
+      hasGemini: !!geminiApiKey,
+      hasMistral: !!mistralApiKey,
+      hasHuggingFace: !!huggingFaceApiKey,
+      geminiLength: geminiApiKey?.length || 0,
+      mistralLength: mistralApiKey?.length || 0,
+      huggingFaceLength: huggingFaceApiKey?.length || 0,
+    })
 
-  // Enhanced prompt engineering for extraordinary output quality
-  const enhancedPrompt = createEnhancedPrompt(prompt, type);
+    // Check if at least one API key is available
+    if (!geminiApiKey && !mistralApiKey && !huggingFaceApiKey) {
+      console.error("No API keys found in environment variables")
+      return res.status(500).json({
+        error:
+          "No API keys configured. Please set at least one of: GEMINI_API_KEY, MISTRAL_API_KEY, or HUGGING_FACE_API_KEY in your environment variables.",
+        debug: {
+          availableEnvVars: Object.keys(process.env).filter((key) => key.includes("API") || key.includes("KEY")),
+        },
+      })
+    }
 
-  // API selection logic
-  const apiPriority = preferredAPI ? [preferredAPI] : ['mistral', 'huggingface', 'gemini'];
-  const availableAPIs = [];
-  
-  if (mistralApiKey) availableAPIs.push('mistral');
-  if (huggingFaceApiKey) availableAPIs.push('huggingface');
-  if (geminiApiKey) availableAPIs.push('gemini');
+    // Enhanced prompt engineering for extraordinary output quality (RESTORED)
+    const enhancedPrompt = createEnhancedPrompt(prompt, type)
 
-  // Filter priority list to only include available APIs
-  const finalPriority = apiPriority.filter(api => availableAPIs.includes(api));
+    // API selection logic
+    const apiPriority = preferredAPI ? [preferredAPI] : ["mistral", "huggingface", "gemini"]
+    const availableAPIs = []
 
-  if (finalPriority.length === 0) {
-    return res.status(500).json({ 
-      error: "No available APIs found. Please check your API key configuration." 
-    });
-  }
+    if (mistralApiKey) availableAPIs.push("mistral")
+    if (huggingFaceApiKey) availableAPIs.push("huggingface")
+    if (geminiApiKey) availableAPIs.push("gemini")
 
-  // Try APIs in priority order
-  for (const apiName of finalPriority) {
-    try {
-      console.log(`Attempting generation with ${apiName.toUpperCase()} API...`);
-      
-      let result;
-      switch (apiName) {
-        case 'mistral':
-          result = await generateWithMistral(enhancedPrompt, mistralApiKey);
-          break;
-        case 'huggingface':
-          result = await generateWithHuggingFace(enhancedPrompt, huggingFaceApiKey);
-          break;
-        case 'gemini':
-          result = await generateWithGemini(enhancedPrompt, geminiApiKey);
-          break;
-        default:
-          continue;
-      }
+    console.log("Available APIs:", availableAPIs)
 
-      if (result && result.trim().length > 100) {
-        // Clean up and enhance the output for extraordinary quality
-        let cleanedOutput = enhanceGeneratedCode(result.trim(), type);
-        
-        // Remove markdown code blocks if present
-        if (cleanedOutput.startsWith('```html')) {
-          cleanedOutput = cleanedOutput.replace(/^```html\s*/, '').replace(/\s*```$/, '');
-        } else if (cleanedOutput.startsWith('```')) {
-          cleanedOutput = cleanedOutput.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    // Filter priority list to only include available APIs
+    const finalPriority = apiPriority.filter((api) => availableAPIs.includes(api))
+
+    if (finalPriority.length === 0) {
+      return res.status(500).json({
+        error: "No available APIs found. Please check your API key configuration.",
+        availableAPIs,
+        requestedAPIs: apiPriority,
+      })
+    }
+
+    // Try APIs in priority order with detailed error tracking
+    const errors = []
+
+    for (const apiName of finalPriority) {
+      try {
+        console.log(`Attempting generation with ${apiName.toUpperCase()} API...`)
+
+        let result
+        switch (apiName) {
+          case "mistral":
+            result = await generateWithMistral(enhancedPrompt, mistralApiKey)
+            break
+          case "huggingface":
+            result = await generateWithHuggingFace(enhancedPrompt, huggingFaceApiKey)
+            break
+          case "gemini":
+            result = await generateWithGemini(enhancedPrompt, geminiApiKey)
+            break
+          default:
+            continue
         }
 
-        // Ensure it starts with DOCTYPE
-        if (!cleanedOutput.startsWith('<!DOCTYPE')) {
-          cleanedOutput = `<!DOCTYPE html>
-<html lang="en">
-<head>
+        if (result && result.trim().length > 100) {
+          // Clean up and enhance the output for extraordinary quality (RESTORED)
+          let cleanedOutput = enhanceGeneratedCode(result.trim(), type)
+
+          // Remove markdown code blocks if present
+          if (cleanedOutput.startsWith("```html")) {
+            cleanedOutput = cleanedOutput.replace(/^```html\s*/, "").replace(/\s*```$/, "")
+          } else if (cleanedOutput.startsWith("```")) {
+            cleanedOutput = cleanedOutput.replace(/^```\s*/, "").replace(/\s*```$/, "")
+          }
+
+          // Ensure it starts with DOCTYPE (RESTORED LOGIC)
+          if (!cleanedOutput.startsWith("<!DOCTYPE")) {
+            cleanedOutput = `<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${type} - Generated by MindForge</title>
@@ -112,39 +131,37 @@ export default async function handler(req, res) {
         }
         h1 { color: #333; margin-bottom: 20px; }
         p { color: #666; line-height: 1.6; }
-    </style>
-</head>
-<body>
+    </style></head><body>
     <div class="container">
         <h1>🎉 ${type} Generated Successfully!</h1>
         <p>Your ${type.toLowerCase()} has been created by MindForge AI using ${apiName.toUpperCase()}. Here's the generated content:</p>
         ${cleanedOutput}
-    </div>
-</body>
-</html>`;
+    </div></body></html>`
+          }
+
+          console.log(
+            `Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`,
+          )
+          return res.status(200).json({
+            code: cleanedOutput,
+            type: type,
+            apiUsed: apiName,
+            timestamp: new Date().toISOString(),
+            characterCount: cleanedOutput.length,
+          })
+        } else {
+          errors.push(`${apiName}: Generated content too short (${result?.length || 0} chars)`)
         }
-
-        console.log(`Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`);
-
-        return res.status(200).json({ 
-          code: cleanedOutput,
-          type: type,
-          apiUsed: apiName,
-          timestamp: new Date().toISOString(),
-          characterCount: cleanedOutput.length
-        });
+      } catch (error) {
+        console.error(`${apiName.toUpperCase()} API error:`, error.message)
+        errors.push(`${apiName}: ${error.message}`)
+        continue // Try next API
       }
-    } catch (error) {
-      console.error(`${apiName.toUpperCase()} API error:`, error.message);
-      continue; // Try next API
     }
-  }
 
-  // If all APIs failed, return fallback
-  console.error("All APIs failed to generate content");
-  const fallbackTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
+    // If all APIs failed, return fallback (RESTORED COMPREHENSIVE FALLBACK)
+    console.error("All APIs failed to generate content", errors)
+    const fallbackTemplate = `<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${type} - MindForge</title>
@@ -184,9 +201,7 @@ export default async function handler(req, res) {
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(0,255,240,0.4);
         }
-    </style>
-</head>
-<body>
+    </style></head><body>
     <div class="container">
         <h1>🚀 ${type}</h1>
         <p>Your ${type.toLowerCase()} is ready to be built!</p>
@@ -195,7 +210,8 @@ export default async function handler(req, res) {
             <h3>⚠️ Generation Note</h3>
             <p>All AI APIs encountered issues. This is a fallback template.</p>
             <p><strong>Original Request:</strong> ${prompt}</p>
-            <p><strong>Available APIs:</strong> ${availableAPIs.join(', ')}</p>
+            <p><strong>Available APIs:</strong> ${availableAPIs.join(", ")}</p>
+            <p><strong>Errors:</strong> ${errors.join("; ")}</p>
         </div>
         
         <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
@@ -225,79 +241,104 @@ export default async function handler(req, res) {
         if (descriptions[type]) {
             document.querySelector('p').textContent = descriptions[type];
         }
-    </script>
-</body>
-</html>`;
+    </script></body></html>`
 
-  return res.status(500).json({ 
-    error: "All APIs failed to generate content",
-    availableAPIs: availableAPIs,
-    fallback: fallbackTemplate
-  });
-}
-
-// Mistral AI API integration - Optimized for extraordinary output
-async function generateWithMistral(prompt, apiKey) {
-  const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'User-Agent': 'MindForge/1.0'
-    },
-    body: JSON.stringify({
-      model: 'mistral-large-latest',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert web developer creating extraordinary, production-ready applications. Focus on quality, modern design, and exceptional user experience.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.3, // Lower temperature for more consistent, high-quality output
-      max_tokens: 16384, // Increased for more comprehensive code
-      top_p: 0.9,
-      frequency_penalty: 0.1, // Reduce repetition
-      presence_penalty: 0.1 // Encourage more diverse content
+    return res.status(500).json({
+      error: "All APIs failed to generate content",
+      availableAPIs: availableAPIs,
+      errors: errors,
+      fallback: fallbackTemplate,
     })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Mistral API error: ${response.status} - ${errorText}`);
+  } catch (error) {
+    console.error("Handler error:", error)
+    return res.status(500).json({
+      error: "Internal server error",
+      message: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    })
   }
-
-  const result = await response.json();
-  
-  if (result.error) {
-    throw new Error(`Mistral API error: ${result.error.message || 'Unknown error'}`);
-  }
-
-  return result?.choices?.[0]?.message?.content;
 }
 
-// Hugging Face API integration - Optimized for extraordinary output
+// Mistral AI API integration - Optimized for extraordinary output (RESTORED)
+async function generateWithMistral(prompt, apiKey) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+  try {
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "User-Agent": "MindForge/1.0",
+      },
+      body: JSON.stringify({
+        model: "mistral-large-latest",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert web developer creating extraordinary, production-ready applications. Focus on quality, modern design, and exceptional user experience.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3, // Lower temperature for more consistent, high-quality output
+        max_tokens: 16384, // Increased for more comprehensive code
+        top_p: 0.9,
+        frequency_penalty: 0.1, // Reduce repetition
+        presence_penalty: 0.1, // Encourage more diverse content
+      }),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Mistral API error: ${response.status} - ${errorText}`)
+    }
+
+    const result = await response.json()
+
+    if (result.error) {
+      throw new Error(`Mistral API error: ${result.error.message || "Unknown error"}`)
+    }
+
+    return result?.choices?.[0]?.message?.content
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error.name === "AbortError") {
+      throw new Error("Mistral API request timed out")
+    }
+    throw error
+  }
+}
+
+// Hugging Face API integration - Optimized for extraordinary output (RESTORED)
 async function generateWithHuggingFace(prompt, apiKey) {
   // Using advanced code-generation models from Hugging Face
   const models = [
-    'bigcode/starcoder2-15b', // More advanced model for better code generation
-    'bigcode/starcoder',
-    'microsoft/DialoGPT-medium' // Fallback for conversation-based content
-  ];
-  
-  let lastError;
-  
+    "bigcode/starcoder2-15b", // More advanced model for better code generation
+    "bigcode/starcoder",
+    "microsoft/DialoGPT-medium", // Fallback for conversation-based content
+  ]
+
+  let lastError
+
   for (const model of models) {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000)
+
       const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'User-Agent': 'MindForge/1.0'
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "User-Agent": "MindForge/1.0",
         },
         body: JSON.stringify({
           inputs: prompt,
@@ -308,108 +349,129 @@ async function generateWithHuggingFace(prompt, apiKey) {
             do_sample: true,
             repetition_penalty: 1.1, // Reduce repetition
             length_penalty: 1.0,
-            no_repeat_ngram_size: 3
-          }
-        })
-      });
+            no_repeat_ngram_size: 3,
+          },
+        }),
+        signal: controller.signal,
+      })
 
-        if (!response.ok) {
-        const errorText = await response.text();
-        lastError = new Error(`Hugging Face API error (${model}): ${response.status} - ${errorText}`);
-        continue; // Try next model
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        lastError = new Error(`Hugging Face API error (${model}): ${response.status} - ${errorText}`)
+        continue // Try next model
       }
 
-      const result = await response.json();
-      
+      const result = await response.json()
+
       if (result.error) {
-        lastError = new Error(`Hugging Face API error (${model}): ${result.error}`);
-        continue; // Try next model
+        lastError = new Error(`Hugging Face API error (${model}): ${result.error}`)
+        continue // Try next model
       }
 
       // Hugging Face returns an array of generated text
-      const generatedText = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text;
-      
+      const generatedText = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text
+
       if (generatedText && generatedText.trim().length > 100) {
-        return generatedText;
+        return generatedText
       }
     } catch (error) {
-      lastError = error;
-      continue; // Try next model
+      if (error.name === "AbortError") {
+        lastError = new Error(`Hugging Face API timeout (${model})`)
+      } else {
+        lastError = error
+      }
+      continue // Try next model
     }
   }
-  
+
   // If all models failed, throw the last error
-  throw lastError || new Error('All Hugging Face models failed');
+  throw lastError || new Error("All Hugging Face models failed")
 }
 
-// Gemini API integration - Optimized for extraordinary output
+// Gemini API integration - Optimized for extraordinary output (RESTORED)
 async function generateWithGemini(prompt, apiKey) {
-  const requestBody = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: prompt
-          }
-        ]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.3, // Lower temperature for more consistent, high-quality output
-      topK: 40,
-      topP: 0.9,
-      maxOutputTokens: 16384, // Increased for more comprehensive code
-      candidateCount: 1,
-      stopSequences: ["```", "<!--", "/*"],
-    },
-    safetySettings: [
-      {
-        category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_HATE_SPEECH",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      }
-    ]
-  };
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "User-Agent": "MindForge/1.0"
+  try {
+    const requestBody = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.3, // Lower temperature for more consistent, high-quality output
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 16384, // Increased for more comprehensive code
+        candidateCount: 1,
+        stopSequences: ["```", "<!--", "/*"],
       },
-      body: JSON.stringify(requestBody),
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE",
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE",
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE",
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE",
+        },
+      ],
     }
-  );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "MindForge/1.0",
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      },
+    )
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+    }
+
+    const result = await response.json()
+
+    if (result.error) {
+      throw new Error(`Gemini API error: ${result.error.message || "Unknown error"}`)
+    }
+
+    return result?.candidates?.[0]?.content?.parts?.[0]?.text
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error.name === "AbortError") {
+      throw new Error("Gemini API request timed out")
+    }
+    throw error
   }
-
-  const result = await response.json();
-  
-  if (result.error) {
-    throw new Error(`Gemini API error: ${result.error.message || 'Unknown error'}`);
-  }
-
-  return result?.candidates?.[0]?.content?.parts?.[0]?.text;
 }
 
-// Enhanced prompt creation function for extraordinary output
+// Enhanced prompt creation function for extraordinary output (RESTORED FULL VERSION)
 function createEnhancedPrompt(userPrompt, projectType) {
   const basePrompt = `You are an expert full-stack developer with 15+ years of experience creating extraordinary, production-ready web applications. You specialize in modern web technologies and create stunning, functional applications that exceed expectations.
 
@@ -454,11 +516,12 @@ OUTPUT FORMAT:
 - Include comprehensive comments in the code
 - Ensure all functionality works out of the box
 
-Generate an extraordinary ${projectType} that will impress users with its quality, functionality, and design:`;
+Generate an extraordinary ${projectType} that will impress users with its quality, functionality, and design:`
 
-  // Add type-specific enhancements
+  // Add type-specific enhancements (RESTORED)
   const typeSpecificEnhancements = {
-    'Website': `
+    Website: `
+
 WEBSITE-SPECIFIC REQUIREMENTS:
 - Create a multi-section landing page with hero, features, about, and contact
 - Include navigation with smooth scrolling
@@ -471,7 +534,8 @@ WEBSITE-SPECIFIC REQUIREMENTS:
 - Include search functionality if relevant
 - Add newsletter signup with email validation`,
 
-    'Mobile App': `
+    "Mobile App": `
+
 MOBILE APP-SPECIFIC REQUIREMENTS:
 - Design for touch interactions and mobile gestures
 - Include bottom navigation or tab bar
@@ -484,7 +548,8 @@ MOBILE APP-SPECIFIC REQUIREMENTS:
 - Include app-like loading states
 - Add mobile-specific animations and transitions`,
 
-    'Game': `
+    Game: `
+
 GAME-SPECIFIC REQUIREMENTS:
 - Create engaging gameplay mechanics
 - Include score tracking and leaderboards
@@ -497,7 +562,8 @@ GAME-SPECIFIC REQUIREMENTS:
 - Add tutorial or instructions
 - Implement save/load game state`,
 
-    'AI Bot': `
+    "AI Bot": `
+
 AI BOT-SPECIFIC REQUIREMENTS:
 - Create a conversational interface
 - Include message bubbles and typing indicators
@@ -510,7 +576,8 @@ AI BOT-SPECIFIC REQUIREMENTS:
 - Add conversation export functionality
 - Implement voice input simulation`,
 
-    'API': `
+    API: `
+
 API-SPECIFIC REQUIREMENTS:
 - Create a comprehensive API documentation interface
 - Include interactive endpoint testing
@@ -523,7 +590,8 @@ API-SPECIFIC REQUIREMENTS:
 - Add API key management interface
 - Implement request history tracking`,
 
-    'AI Tool': `
+    "AI Tool": `
+
 AI TOOL-SPECIFIC REQUIREMENTS:
 - Create specialized AI functionality interface
 - Include input preprocessing and validation
@@ -534,23 +602,21 @@ AI TOOL-SPECIFIC REQUIREMENTS:
 - Create result comparison features
 - Include tool configuration options
 - Add usage analytics and statistics
-- Implement result sharing functionality`
-  };
+- Implement result sharing functionality`,
+  }
 
-  const typeEnhancement = typeSpecificEnhancements[projectType] || '';
-  
-  return basePrompt + typeEnhancement;
+  const typeEnhancement = typeSpecificEnhancements[projectType] || ""
+
+  return basePrompt + typeEnhancement
 }
 
-// Code enhancement function for extraordinary output quality
+// Code enhancement function for extraordinary output quality (RESTORED FULL VERSION)
 function enhanceGeneratedCode(code, projectType) {
-  let enhancedCode = code;
-  
+  let enhancedCode = code
+
   // Ensure proper HTML structure
-  if (!enhancedCode.includes('<!DOCTYPE html>')) {
-    enhancedCode = `<!DOCTYPE html>
-<html lang="en">
-<head>
+  if (!enhancedCode.includes("<!DOCTYPE html>")) {
+    enhancedCode = `<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${projectType} generated by MindForge AI">
@@ -645,9 +711,7 @@ function enhanceGeneratedCode(code, projectType) {
             outline: 2px solid var(--accent-color);
             outline-offset: 2px;
         }
-    </style>
-</head>
-<body>
+    </style></head><body>
     ${enhancedCode}
     
     <script>
@@ -700,22 +764,25 @@ function enhanceGeneratedCode(code, projectType) {
                 });
             }
         });
-    </script>
-</body>
-</html>`;
+    </script></body></html>`
   }
-  
+
   // Add enhanced meta tags if missing
   if (!enhancedCode.includes('<meta name="viewport"')) {
-    enhancedCode = enhancedCode.replace('<head>', `<head>
+    enhancedCode = enhancedCode.replace(
+      "<head>",
+      `<head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${projectType} generated by MindForge AI">
-    <meta name="theme-color" content="#667eea">`);
+    <meta name="theme-color" content="#667eea">`,
+    )
   }
-  
+
   // Add enhanced CSS custom properties if not present
-  if (!enhancedCode.includes(':root')) {
-    enhancedCode = enhancedCode.replace('<style>', `<style>
+  if (!enhancedCode.includes(":root")) {
+    enhancedCode = enhancedCode.replace(
+      "<style>",
+      `<style>
         :root {
             --primary-color: #667eea;
             --secondary-color: #764ba2;
@@ -725,12 +792,15 @@ function enhanceGeneratedCode(code, projectType) {
             --shadow: 0 10px 30px rgba(0,0,0,0.1);
             --border-radius: 12px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }`);
+        }`,
+    )
   }
-  
+
   // Add enhanced animations if not present
-  if (!enhancedCode.includes('@keyframes')) {
-    enhancedCode = enhancedCode.replace('</style>', `
+  if (!enhancedCode.includes("@keyframes")) {
+    enhancedCode = enhancedCode.replace(
+      "</style>",
+      `
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -739,12 +809,15 @@ function enhanceGeneratedCode(code, projectType) {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
-    </style>`);
+    </style>`,
+    )
   }
-  
+
   // Add enhanced JavaScript if not present
-  if (!enhancedCode.includes('addEventListener')) {
-    enhancedCode = enhancedCode.replace('</body>', `
+  if (!enhancedCode.includes("addEventListener")) {
+    enhancedCode = enhancedCode.replace(
+      "</body>",
+      `
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add smooth scrolling
@@ -758,9 +831,9 @@ function enhanceGeneratedCode(code, projectType) {
                 });
             });
         });
-    </script>
-</body>`);
+    </script></body>`,
+    )
   }
-  
-  return enhancedCode;
+
+  return enhancedCode
 }
