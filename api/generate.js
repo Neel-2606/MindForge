@@ -1,12 +1,35 @@
 export default async function handler(req, res) {
+  // Add detailed logging for debugging
+  console.log("API Route Hit:", {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    timestamp: new Date().toISOString(),
+  })
+
   // Set CORS headers for Vercel deployment
   res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+  res.setHeader("Access-Control-Max-Age", "86400")
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request")
     return res.status(200).end()
+  }
+
+  // Add GET method for testing
+  if (req.method === "GET") {
+    console.log("Handling GET request - API is working")
+    return res.status(200).json({
+      message: "MindForge API is working!",
+      timestamp: new Date().toISOString(),
+      availableEndpoints: {
+        POST: "/api/generate - Generate content with AI",
+        GET: "/api/generate - Test endpoint",
+      },
+    })
   }
 
   if (req.method !== "POST") {
@@ -15,6 +38,8 @@ export default async function handler(req, res) {
 
   try {
     const { prompt, type, preferredAPI } = req.body
+
+    console.log("Request body:", { prompt: prompt?.substring(0, 100), type, preferredAPI })
 
     if (!prompt || !type) {
       return res.status(400).json({ error: "Prompt and type are required" })
@@ -33,6 +58,8 @@ export default async function handler(req, res) {
       geminiLength: geminiApiKey?.length || 0,
       mistralLength: mistralApiKey?.length || 0,
       huggingFaceLength: huggingFaceApiKey?.length || 0,
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV,
     })
 
     // Check if at least one API key is available
@@ -42,12 +69,20 @@ export default async function handler(req, res) {
         error:
           "No API keys configured. Please set at least one of: GEMINI_API_KEY, MISTRAL_API_KEY, or HUGGING_FACE_API_KEY in your environment variables.",
         debug: {
-          availableEnvVars: Object.keys(process.env).filter((key) => key.includes("API") || key.includes("KEY")),
+          availableEnvVars: Object.keys(process.env).filter(
+            (key) =>
+              key.includes("API") ||
+              key.includes("KEY") ||
+              key.includes("GEMINI") ||
+              key.includes("MISTRAL") ||
+              key.includes("HUGGING"),
+          ),
+          totalEnvVars: Object.keys(process.env).length,
         },
       })
     }
 
-    // Enhanced prompt engineering for extraordinary output quality (RESTORED)
+    // Enhanced prompt engineering for extraordinary output quality
     const enhancedPrompt = createEnhancedPrompt(prompt, type)
 
     // API selection logic
@@ -94,7 +129,7 @@ export default async function handler(req, res) {
         }
 
         if (result && result.trim().length > 100) {
-          // Clean up and enhance the output for extraordinary quality (RESTORED)
+          // Clean up and enhance the output for extraordinary quality
           let cleanedOutput = enhanceGeneratedCode(result.trim(), type)
 
           // Remove markdown code blocks if present
@@ -104,7 +139,7 @@ export default async function handler(req, res) {
             cleanedOutput = cleanedOutput.replace(/^```\s*/, "").replace(/\s*```$/, "")
           }
 
-          // Ensure it starts with DOCTYPE (RESTORED LOGIC)
+          // Ensure it starts with DOCTYPE
           if (!cleanedOutput.startsWith("<!DOCTYPE")) {
             cleanedOutput = `<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
@@ -142,12 +177,14 @@ export default async function handler(req, res) {
           console.log(
             `Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`,
           )
+
           return res.status(200).json({
             code: cleanedOutput,
             type: type,
             apiUsed: apiName,
             timestamp: new Date().toISOString(),
             characterCount: cleanedOutput.length,
+            success: true,
           })
         } else {
           errors.push(`${apiName}: Generated content too short (${result?.length || 0} chars)`)
@@ -155,99 +192,25 @@ export default async function handler(req, res) {
       } catch (error) {
         console.error(`${apiName.toUpperCase()} API error:`, error.message)
         errors.push(`${apiName}: ${error.message}`)
-        continue // Try next API
+        continue
       }
     }
 
-    // If all APIs failed, return fallback (RESTORED COMPREHENSIVE FALLBACK)
+    // If all APIs failed, return comprehensive fallback
     console.error("All APIs failed to generate content", errors)
-    const fallbackTemplate = `<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${type} - MindForge</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        h1 { font-size: 2.5em; margin-bottom: 20px; }
-        p { font-size: 1.2em; margin-bottom: 30px; opacity: 0.9; }
-        .error { background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px; margin: 20px 0; }
-        .retry-btn {
-            background: #00fff0;
-            color: #000;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .retry-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,255,240,0.4);
-        }
-    </style></head><body>
-    <div class="container">
-        <h1>🚀 ${type}</h1>
-        <p>Your ${type.toLowerCase()} is ready to be built!</p>
-        
-        <div class="error">
-            <h3>⚠️ Generation Note</h3>
-            <p>All AI APIs encountered issues. This is a fallback template.</p>
-            <p><strong>Original Request:</strong> ${prompt}</p>
-            <p><strong>Available APIs:</strong> ${availableAPIs.join(", ")}</p>
-            <p><strong>Errors:</strong> ${errors.join("; ")}</p>
-        </div>
-        
-        <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
-    </div>
-    
-    <script>
-        // Add some interactive features
-        document.querySelector('.retry-btn').addEventListener('click', function() {
-            this.textContent = '🔄 Retrying...';
-            setTimeout(() => location.reload(), 1000);
-        });
-        
-        // Add a simple animation
-        document.querySelector('.container').style.animation = 'fadeIn 1s ease-in';
-        
-        // Add some dynamic content based on type
-        const type = '${type}';
-        const descriptions = {
-            'Website': 'A beautiful, responsive website with modern design',
-            'Mobile App': 'A mobile-first web application with touch interactions',
-            'Game': 'An interactive game with engaging gameplay',
-            'AI Bot': 'An intelligent chatbot with natural language processing',
-            'API': 'A RESTful API with comprehensive endpoints',
-            'AI Tool': 'A powerful AI-powered utility application'
-        };
-        
-        if (descriptions[type]) {
-            document.querySelector('p').textContent = descriptions[type];
-        }
-    </script></body></html>`
+    const fallbackTemplate = createFallbackTemplate(type, prompt, availableAPIs, errors)
 
     return res.status(500).json({
       error: "All APIs failed to generate content",
       availableAPIs: availableAPIs,
       errors: errors,
       fallback: fallbackTemplate,
+      debug: {
+        prompt: prompt.substring(0, 100) + "...",
+        type: type,
+        preferredAPI: preferredAPI,
+        finalPriority: finalPriority,
+      },
     })
   } catch (error) {
     console.error("Handler error:", error)
@@ -259,10 +222,10 @@ export default async function handler(req, res) {
   }
 }
 
-// Mistral AI API integration - Optimized for extraordinary output (RESTORED)
+// Mistral AI API integration
 async function generateWithMistral(prompt, apiKey) {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000)
 
   try {
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -285,11 +248,11 @@ async function generateWithMistral(prompt, apiKey) {
             content: prompt,
           },
         ],
-        temperature: 0.3, // Lower temperature for more consistent, high-quality output
-        max_tokens: 16384, // Increased for more comprehensive code
+        temperature: 0.3,
+        max_tokens: 16384,
         top_p: 0.9,
-        frequency_penalty: 0.1, // Reduce repetition
-        presence_penalty: 0.1, // Encourage more diverse content
+        frequency_penalty: 0.1,
+        presence_penalty: 0.1,
       }),
       signal: controller.signal,
     })
@@ -317,14 +280,9 @@ async function generateWithMistral(prompt, apiKey) {
   }
 }
 
-// Hugging Face API integration - Optimized for extraordinary output (RESTORED)
+// Hugging Face API integration
 async function generateWithHuggingFace(prompt, apiKey) {
-  // Using advanced code-generation models from Hugging Face
-  const models = [
-    "bigcode/starcoder2-15b", // More advanced model for better code generation
-    "bigcode/starcoder",
-    "microsoft/DialoGPT-medium", // Fallback for conversation-based content
-  ]
+  const models = ["microsoft/DialoGPT-medium", "bigcode/starcoder", "facebook/blenderbot-400M-distill"]
 
   let lastError
 
@@ -343,11 +301,11 @@ async function generateWithHuggingFace(prompt, apiKey) {
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            max_new_tokens: 4096, // Increased for more comprehensive output
-            temperature: 0.4, // Lower temperature for more consistent quality
+            max_new_tokens: 4096,
+            temperature: 0.4,
             top_p: 0.9,
             do_sample: true,
-            repetition_penalty: 1.1, // Reduce repetition
+            repetition_penalty: 1.1,
             length_penalty: 1.0,
             no_repeat_ngram_size: 3,
           },
@@ -360,17 +318,16 @@ async function generateWithHuggingFace(prompt, apiKey) {
       if (!response.ok) {
         const errorText = await response.text()
         lastError = new Error(`Hugging Face API error (${model}): ${response.status} - ${errorText}`)
-        continue // Try next model
+        continue
       }
 
       const result = await response.json()
 
       if (result.error) {
         lastError = new Error(`Hugging Face API error (${model}): ${result.error}`)
-        continue // Try next model
+        continue
       }
 
-      // Hugging Face returns an array of generated text
       const generatedText = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text
 
       if (generatedText && generatedText.trim().length > 100) {
@@ -382,15 +339,14 @@ async function generateWithHuggingFace(prompt, apiKey) {
       } else {
         lastError = error
       }
-      continue // Try next model
+      continue
     }
   }
 
-  // If all models failed, throw the last error
   throw lastError || new Error("All Hugging Face models failed")
 }
 
-// Gemini API integration - Optimized for extraordinary output (RESTORED)
+// Gemini API integration
 async function generateWithGemini(prompt, apiKey) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 30000)
@@ -400,20 +356,15 @@ async function generateWithGemini(prompt, apiKey) {
       contents: [
         {
           role: "user",
-          parts: [
-            {
-              text: prompt,
-            },
-          ],
+          parts: [{ text: prompt }],
         },
       ],
       generationConfig: {
-        temperature: 0.3, // Lower temperature for more consistent, high-quality output
+        temperature: 0.3,
         topK: 40,
         topP: 0.9,
-        maxOutputTokens: 16384, // Increased for more comprehensive code
+        maxOutputTokens: 16384,
         candidateCount: 1,
-        stopSequences: ["```", "<!--", "/*"],
       },
       safetySettings: [
         {
@@ -471,7 +422,7 @@ async function generateWithGemini(prompt, apiKey) {
   }
 }
 
-// Enhanced prompt creation function for extraordinary output (RESTORED FULL VERSION)
+// Enhanced prompt creation function
 function createEnhancedPrompt(userPrompt, projectType) {
   const basePrompt = `You are an expert full-stack developer with 15+ years of experience creating extraordinary, production-ready web applications. You specialize in modern web technologies and create stunning, functional applications that exceed expectations.
 
@@ -518,7 +469,7 @@ OUTPUT FORMAT:
 
 Generate an extraordinary ${projectType} that will impress users with its quality, functionality, and design:`
 
-  // Add type-specific enhancements (RESTORED)
+  // Add type-specific enhancements
   const typeSpecificEnhancements = {
     Website: `
 
@@ -606,11 +557,10 @@ AI TOOL-SPECIFIC REQUIREMENTS:
   }
 
   const typeEnhancement = typeSpecificEnhancements[projectType] || ""
-
   return basePrompt + typeEnhancement
 }
 
-// Code enhancement function for extraordinary output quality (RESTORED FULL VERSION)
+// Code enhancement function
 function enhanceGeneratedCode(code, projectType) {
   let enhancedCode = code
 
@@ -624,7 +574,6 @@ function enhanceGeneratedCode(code, projectType) {
     <meta name="author" content="MindForge AI">
     <title>${projectType} - MindForge AI</title>
     <style>
-        /* Enhanced CSS with modern design patterns */
         :root {
             --primary-color: #667eea;
             --secondary-color: #764ba2;
@@ -651,16 +600,9 @@ function enhanceGeneratedCode(code, projectType) {
             overflow-x: hidden;
         }
         
-        /* Enhanced animations */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         @keyframes pulse {
@@ -668,7 +610,6 @@ function enhanceGeneratedCode(code, projectType) {
             50% { transform: scale(1.05); }
         }
         
-        /* Enhanced loading states */
         .loading {
             display: inline-block;
             width: 20px;
@@ -683,14 +624,10 @@ function enhanceGeneratedCode(code, projectType) {
             to { transform: rotate(360deg); }
         }
         
-        /* Enhanced responsive design */
         @media (max-width: 768px) {
-            :root {
-                --border-radius: 8px;
-            }
+            :root { --border-radius: 8px; }
         }
         
-        /* Enhanced accessibility */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -703,121 +640,13 @@ function enhanceGeneratedCode(code, projectType) {
             border: 0;
         }
         
-        /* Enhanced focus states */
-        button:focus,
-        input:focus,
-        textarea:focus,
-        select:focus {
+        button:focus, input:focus, textarea:focus, select:focus {
             outline: 2px solid var(--accent-color);
             outline-offset: 2px;
         }
     </style></head><body>
     ${enhancedCode}
     
-    <script>
-        // Enhanced JavaScript with modern patterns
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add smooth scrolling
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-            
-            // Add intersection observer for animations
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
-                    }
-                });
-            }, observerOptions);
-            
-            // Observe all major elements
-            document.querySelectorAll('section, .card, .feature, .container').forEach(el => {
-                observer.observe(el);
-            });
-            
-            // Enhanced error handling
-            window.addEventListener('error', function(e) {
-                console.error('Application error:', e.error);
-                // Could add error reporting here
-            });
-            
-            // Enhanced performance monitoring
-            if ('performance' in window) {
-                window.addEventListener('load', function() {
-                    const perfData = performance.getEntriesByType('navigation')[0];
-                    console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
-                });
-            }
-        });
-    </script></body></html>`
-  }
-
-  // Add enhanced meta tags if missing
-  if (!enhancedCode.includes('<meta name="viewport"')) {
-    enhancedCode = enhancedCode.replace(
-      "<head>",
-      `<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="${projectType} generated by MindForge AI">
-    <meta name="theme-color" content="#667eea">`,
-    )
-  }
-
-  // Add enhanced CSS custom properties if not present
-  if (!enhancedCode.includes(":root")) {
-    enhancedCode = enhancedCode.replace(
-      "<style>",
-      `<style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --accent-color: #f093fb;
-            --text-color: #333;
-            --bg-color: #fff;
-            --shadow: 0 10px 30px rgba(0,0,0,0.1);
-            --border-radius: 12px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }`,
-    )
-  }
-
-  // Add enhanced animations if not present
-  if (!enhancedCode.includes("@keyframes")) {
-    enhancedCode = enhancedCode.replace(
-      "</style>",
-      `
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-    </style>`,
-    )
-  }
-
-  // Add enhanced JavaScript if not present
-  if (!enhancedCode.includes("addEventListener")) {
-    enhancedCode = enhancedCode.replace(
-      "</body>",
-      `
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add smooth scrolling
@@ -830,10 +659,118 @@ function enhanceGeneratedCode(code, projectType) {
                     }
                 });
             });
+            
+            // Add intersection observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+            
+            document.querySelectorAll('section, .card, .feature, .container').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Enhanced error handling
+            window.addEventListener('error', function(e) {
+                console.error('Application error:', e.error);
+            });
+            
+            // Performance monitoring
+            if ('performance' in window) {
+                window.addEventListener('load', function() {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+                });
+            }
         });
-    </script></body>`,
-    )
+    </script></body></html>`
   }
 
   return enhancedCode
+}
+
+// Create comprehensive fallback template
+function createFallbackTemplate(type, prompt, availableAPIs, errors) {
+  return `<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${type} - MindForge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+        h1 { font-size: 2.5em; margin-bottom: 20px; }
+        p { font-size: 1.2em; margin-bottom: 30px; opacity: 0.9; }
+        .error { background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .retry-btn {
+            background: #00fff0;
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .retry-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,255,240,0.4);
+        }
+    </style></head><body>
+    <div class="container">
+        <h1>🚀 ${type}</h1>
+        <p>Your ${type.toLowerCase()} is ready to be built!</p>
+        
+        <div class="error">
+            <h3>⚠️ Generation Note</h3>
+            <p>All AI APIs encountered issues. This is a fallback template.</p>
+            <p><strong>Original Request:</strong> ${prompt}</p>
+            <p><strong>Available APIs:</strong> ${availableAPIs.join(", ")}</p>
+            <p><strong>Errors:</strong> ${errors.join("; ")}</p>
+        </div>
+        
+        <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
+    </div>
+    
+    <script>
+        document.querySelector('.retry-btn').addEventListener('click', function() {
+            this.textContent = '🔄 Retrying...';
+            setTimeout(() => location.reload(), 1000);
+        });
+        
+        document.querySelector('.container').style.animation = 'fadeIn 1s ease-in';
+        
+        const type = '${type}';
+        const descriptions = {
+            'Website': 'A beautiful, responsive website with modern design',
+            'Mobile App': 'A mobile-first web application with touch interactions',
+            'Game': 'An interactive game with engaging gameplay',
+            'AI Bot': 'An intelligent chatbot with natural language processing',
+            'API': 'A RESTful API with comprehensive endpoints',
+            'AI Tool': 'A powerful AI-powered utility application'
+        };
+        
+        if (descriptions[type]) {
+            document.querySelector('p').textContent = descriptions[type];
+        }
+    </script></body></html>`
 }
