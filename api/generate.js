@@ -13,140 +13,79 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { prompt, type } = req.body;
+  const { prompt, type, preferredAPI } = req.body;
 
   if (!prompt || !type) {
     return res.status(400).json({ error: "Prompt and type are required" });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Get API keys from environment variables
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const mistralApiKey = process.env.MISTRAL_API_KEY;
+  const huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY;
 
-  if (!apiKey) {
-    console.error("GEMINI_API_KEY not found in environment variables");
+  // Check if at least one API key is available
+  if (!geminiApiKey && !mistralApiKey && !huggingFaceApiKey) {
+    console.error("No API keys found in environment variables");
     return res.status(500).json({ 
-      error: "API key not configured. Please set GEMINI_API_KEY in your environment variables." 
+      error: "No API keys configured. Please set at least one of: GEMINI_API_KEY, MISTRAL_API_KEY, or HUGGING_FACE_API_KEY in your environment variables." 
     });
   }
 
-  // Enhanced prompt engineering for better code generation
-  const enhancedPrompt = `
-You are an expert front-end developer specializing in creating beautiful, modern, and functional web applications.
+  // Enhanced prompt engineering for extraordinary output quality
+  const enhancedPrompt = createEnhancedPrompt(prompt, type);
 
-TASK: Generate a complete, standalone ${type} using ONLY HTML with internal CSS and JavaScript.
+  // API selection logic
+  const apiPriority = preferredAPI ? [preferredAPI] : ['mistral', 'huggingface', 'gemini'];
+  const availableAPIs = [];
+  
+  if (mistralApiKey) availableAPIs.push('mistral');
+  if (huggingFaceApiKey) availableAPIs.push('huggingface');
+  if (geminiApiKey) availableAPIs.push('gemini');
 
-REQUIREMENTS:
-1. Create a SINGLE HTML file with everything included
-2. Use <style> tag for all CSS (no external files)
-3. Use <script> tag for all JavaScript (no external files)
-4. Make it responsive and mobile-friendly
-5. Use modern CSS (flexbox, grid, animations)
-6. Include interactive features where appropriate
-7. Use a beautiful, modern design with good UX
-8. Ensure the code is clean, well-commented, and production-ready
+  // Filter priority list to only include available APIs
+  const finalPriority = apiPriority.filter(api => availableAPIs.includes(api));
 
-PROJECT TYPE: ${type}
-USER REQUEST: ${prompt}
+  if (finalPriority.length === 0) {
+    return res.status(500).json({ 
+      error: "No available APIs found. Please check your API key configuration." 
+    });
+  }
 
-IMPORTANT:
-- Output ONLY the complete HTML code
-- Do not include explanations or markdown
-- Start with <!DOCTYPE html>
-- Include proper meta tags and viewport
-- Use semantic HTML elements
-- Add smooth animations and transitions
-- Make it visually appealing with gradients, shadows, and modern styling
-- Include error handling in JavaScript
-- Ensure accessibility features
-
-Generate a complete, beautiful ${type} that matches the user's request:
-`;
-
-  const requestBody = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: enhancedPrompt
-          }
-        ]
+  // Try APIs in priority order
+  for (const apiName of finalPriority) {
+    try {
+      console.log(`Attempting generation with ${apiName.toUpperCase()} API...`);
+      
+      let result;
+      switch (apiName) {
+        case 'mistral':
+          result = await generateWithMistral(enhancedPrompt, mistralApiKey);
+          break;
+        case 'huggingface':
+          result = await generateWithHuggingFace(enhancedPrompt, huggingFaceApiKey);
+          break;
+        case 'gemini':
+          result = await generateWithGemini(enhancedPrompt, geminiApiKey);
+          break;
+        default:
+          continue;
       }
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 8192,
-    },
-    safetySettings: [
-      {
-        category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_HATE_SPEECH",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      }
-    ]
-  };
 
-  try {
-    console.log(`Generating ${type} for prompt: ${prompt.substring(0, 100)}...`);
+      if (result && result.trim().length > 100) {
+        // Clean up and enhance the output for extraordinary quality
+        let cleanedOutput = enhanceGeneratedCode(result.trim(), type);
+        
+        // Remove markdown code blocks if present
+        if (cleanedOutput.startsWith('```html')) {
+          cleanedOutput = cleanedOutput.replace(/^```html\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanedOutput.startsWith('```')) {
+          cleanedOutput = cleanedOutput.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "User-Agent": "MindForge/1.0"
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    
-    // Check for API errors
-    if (result.error) {
-      console.error("Gemini API returned error:", result.error);
-      throw new Error(`Gemini API error: ${result.error.message || 'Unknown error'}`);
-    }
-
-    const output = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!output || output.trim().length < 100) {
-      console.error("Invalid or empty output from Gemini");
-      throw new Error("Generated code is too short or invalid");
-    }
-
-    // Clean up the output
-    let cleanedOutput = output.trim();
-    
-    // Remove markdown code blocks if present
-    if (cleanedOutput.startsWith('```html')) {
-      cleanedOutput = cleanedOutput.replace(/^```html\s*/, '').replace(/\s*```$/, '');
-    } else if (cleanedOutput.startsWith('```')) {
-      cleanedOutput = cleanedOutput.replace(/^```\s*/, '').replace(/\s*```$/, '');
-    }
-
-    // Ensure it starts with DOCTYPE
-    if (!cleanedOutput.startsWith('<!DOCTYPE')) {
-      cleanedOutput = `<!DOCTYPE html>
+        // Ensure it starts with DOCTYPE
+        if (!cleanedOutput.startsWith('<!DOCTYPE')) {
+          cleanedOutput = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -178,27 +117,32 @@ Generate a complete, beautiful ${type} that matches the user's request:
 <body>
     <div class="container">
         <h1>🎉 ${type} Generated Successfully!</h1>
-        <p>Your ${type.toLowerCase()} has been created by MindForge AI. Here's the generated content:</p>
+        <p>Your ${type.toLowerCase()} has been created by MindForge AI using ${apiName.toUpperCase()}. Here's the generated content:</p>
         ${cleanedOutput}
     </div>
 </body>
 </html>`;
+        }
+
+        console.log(`Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`);
+
+        return res.status(200).json({ 
+          code: cleanedOutput,
+          type: type,
+          apiUsed: apiName,
+          timestamp: new Date().toISOString(),
+          characterCount: cleanedOutput.length
+        });
+      }
+    } catch (error) {
+      console.error(`${apiName.toUpperCase()} API error:`, error.message);
+      continue; // Try next API
     }
+  }
 
-    console.log(`Successfully generated ${type} (${cleanedOutput.length} characters)`);
-
-    res.status(200).json({ 
-      code: cleanedOutput,
-      type: type,
-      timestamp: new Date().toISOString(),
-      characterCount: cleanedOutput.length
-    });
-
-  } catch (error) {
-    console.error("Generation error:", error);
-    
-    // Return a fallback template if generation fails
-    const fallbackTemplate = `<!DOCTYPE html>
+  // If all APIs failed, return fallback
+  console.error("All APIs failed to generate content");
+  const fallbackTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -249,8 +193,9 @@ Generate a complete, beautiful ${type} that matches the user's request:
         
         <div class="error">
             <h3>⚠️ Generation Note</h3>
-            <p>The AI generation encountered an issue. This is a fallback template.</p>
+            <p>All AI APIs encountered issues. This is a fallback template.</p>
             <p><strong>Original Request:</strong> ${prompt}</p>
+            <p><strong>Available APIs:</strong> ${availableAPIs.join(', ')}</p>
         </div>
         
         <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
@@ -284,10 +229,538 @@ Generate a complete, beautiful ${type} that matches the user's request:
 </body>
 </html>`;
 
-    res.status(500).json({ 
-      error: "Failed to generate from Gemini API",
-      details: error.message,
-      fallback: fallbackTemplate
-    });
+  return res.status(500).json({ 
+    error: "All APIs failed to generate content",
+    availableAPIs: availableAPIs,
+    fallback: fallbackTemplate
+  });
+}
+
+// Mistral AI API integration - Optimized for extraordinary output
+async function generateWithMistral(prompt, apiKey) {
+  const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'User-Agent': 'MindForge/1.0'
+    },
+    body: JSON.stringify({
+      model: 'mistral-large-latest',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert web developer creating extraordinary, production-ready applications. Focus on quality, modern design, and exceptional user experience.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3, // Lower temperature for more consistent, high-quality output
+      max_tokens: 16384, // Increased for more comprehensive code
+      top_p: 0.9,
+      frequency_penalty: 0.1, // Reduce repetition
+      presence_penalty: 0.1 // Encourage more diverse content
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Mistral API error: ${response.status} - ${errorText}`);
   }
+
+  const result = await response.json();
+  
+  if (result.error) {
+    throw new Error(`Mistral API error: ${result.error.message || 'Unknown error'}`);
+  }
+
+  return result?.choices?.[0]?.message?.content;
+}
+
+// Hugging Face API integration - Optimized for extraordinary output
+async function generateWithHuggingFace(prompt, apiKey) {
+  // Using advanced code-generation models from Hugging Face
+  const models = [
+    'bigcode/starcoder2-15b', // More advanced model for better code generation
+    'bigcode/starcoder',
+    'microsoft/DialoGPT-medium' // Fallback for conversation-based content
+  ];
+  
+  let lastError;
+  
+  for (const model of models) {
+    try {
+      const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'User-Agent': 'MindForge/1.0'
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 4096, // Increased for more comprehensive output
+            temperature: 0.4, // Lower temperature for more consistent quality
+            top_p: 0.9,
+            do_sample: true,
+            repetition_penalty: 1.1, // Reduce repetition
+            length_penalty: 1.0,
+            no_repeat_ngram_size: 3
+          }
+        })
+      });
+
+        if (!response.ok) {
+        const errorText = await response.text();
+        lastError = new Error(`Hugging Face API error (${model}): ${response.status} - ${errorText}`);
+        continue; // Try next model
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        lastError = new Error(`Hugging Face API error (${model}): ${result.error}`);
+        continue; // Try next model
+      }
+
+      // Hugging Face returns an array of generated text
+      const generatedText = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text;
+      
+      if (generatedText && generatedText.trim().length > 100) {
+        return generatedText;
+      }
+    } catch (error) {
+      lastError = error;
+      continue; // Try next model
+    }
+  }
+  
+  // If all models failed, throw the last error
+  throw lastError || new Error('All Hugging Face models failed');
+}
+
+// Gemini API integration - Optimized for extraordinary output
+async function generateWithGemini(prompt, apiKey) {
+  const requestBody = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: prompt
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.3, // Lower temperature for more consistent, high-quality output
+      topK: 40,
+      topP: 0.9,
+      maxOutputTokens: 16384, // Increased for more comprehensive code
+      candidateCount: 1,
+      stopSequences: ["```", "<!--", "/*"],
+    },
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_HARASSMENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_HATE_SPEECH",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      }
+    ]
+  };
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "User-Agent": "MindForge/1.0"
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.error) {
+    throw new Error(`Gemini API error: ${result.error.message || 'Unknown error'}`);
+  }
+
+  return result?.candidates?.[0]?.content?.parts?.[0]?.text;
+}
+
+// Enhanced prompt creation function for extraordinary output
+function createEnhancedPrompt(userPrompt, projectType) {
+  const basePrompt = `You are an expert full-stack developer with 15+ years of experience creating extraordinary, production-ready web applications. You specialize in modern web technologies and create stunning, functional applications that exceed expectations.
+
+TASK: Generate a complete, standalone ${projectType} using ONLY HTML with internal CSS and JavaScript.
+
+CORE REQUIREMENTS FOR EXTRAORDINARY OUTPUT:
+1. Create a SINGLE HTML file with everything included (no external dependencies)
+2. Use <style> tag for all CSS (no external files)
+3. Use <script> tag for all JavaScript (no external files)
+4. Make it fully responsive and mobile-first
+5. Use modern CSS techniques (CSS Grid, Flexbox, Custom Properties, Animations)
+6. Include interactive features and smooth animations
+7. Use a beautiful, modern design with excellent UX/UI
+8. Ensure the code is clean, well-commented, and production-ready
+9. Include proper error handling and loading states
+10. Optimize for performance and accessibility
+
+PROJECT TYPE: ${projectType}
+USER REQUEST: ${userPrompt}
+
+DESIGN & UX REQUIREMENTS:
+- Use modern color schemes with gradients and shadows
+- Implement smooth transitions and micro-interactions
+- Add hover effects and visual feedback
+- Use modern typography with proper hierarchy
+- Include loading animations and skeleton screens
+- Make it feel premium and polished
+
+TECHNICAL REQUIREMENTS:
+- Use semantic HTML5 elements
+- Implement proper meta tags and viewport settings
+- Add ARIA labels for accessibility
+- Use CSS custom properties for theming
+- Include responsive breakpoints (mobile, tablet, desktop)
+- Add proper error boundaries and fallbacks
+- Optimize for Core Web Vitals
+
+OUTPUT FORMAT:
+- Output ONLY the complete HTML code
+- Do not include explanations or markdown
+- Start with <!DOCTYPE html>
+- Include comprehensive comments in the code
+- Ensure all functionality works out of the box
+
+Generate an extraordinary ${projectType} that will impress users with its quality, functionality, and design:`;
+
+  // Add type-specific enhancements
+  const typeSpecificEnhancements = {
+    'Website': `
+WEBSITE-SPECIFIC REQUIREMENTS:
+- Create a multi-section landing page with hero, features, about, and contact
+- Include navigation with smooth scrolling
+- Add call-to-action buttons with hover effects
+- Implement a contact form with validation
+- Use modern card layouts and grid systems
+- Include testimonials or portfolio sections
+- Add social media integration elements
+- Implement dark/light mode toggle
+- Include search functionality if relevant
+- Add newsletter signup with email validation`,
+
+    'Mobile App': `
+MOBILE APP-SPECIFIC REQUIREMENTS:
+- Design for touch interactions and mobile gestures
+- Include bottom navigation or tab bar
+- Add pull-to-refresh functionality
+- Implement swipe gestures for navigation
+- Use mobile-optimized forms and inputs
+- Include offline functionality indicators
+- Add haptic feedback simulation
+- Implement mobile-first responsive design
+- Include app-like loading states
+- Add mobile-specific animations and transitions`,
+
+    'Game': `
+GAME-SPECIFIC REQUIREMENTS:
+- Create engaging gameplay mechanics
+- Include score tracking and leaderboards
+- Add sound effects and visual feedback
+- Implement game state management
+- Include multiple difficulty levels
+- Add power-ups or special abilities
+- Create smooth game animations
+- Include game over and restart functionality
+- Add tutorial or instructions
+- Implement save/load game state`,
+
+    'AI Bot': `
+AI BOT-SPECIFIC REQUIREMENTS:
+- Create a conversational interface
+- Include message bubbles and typing indicators
+- Add user input validation and processing
+- Implement response generation simulation
+- Include conversation history
+- Add quick reply buttons
+- Create smooth message animations
+- Include bot avatar and personality
+- Add conversation export functionality
+- Implement voice input simulation`,
+
+    'API': `
+API-SPECIFIC REQUIREMENTS:
+- Create a comprehensive API documentation interface
+- Include interactive endpoint testing
+- Add request/response examples
+- Implement authentication demonstration
+- Include rate limiting indicators
+- Add API status monitoring
+- Create endpoint explorer with search
+- Include code snippet generation
+- Add API key management interface
+- Implement request history tracking`,
+
+    'AI Tool': `
+AI TOOL-SPECIFIC REQUIREMENTS:
+- Create specialized AI functionality interface
+- Include input preprocessing and validation
+- Add result visualization and formatting
+- Implement batch processing capabilities
+- Include export functionality (JSON, CSV, etc.)
+- Add progress indicators and loading states
+- Create result comparison features
+- Include tool configuration options
+- Add usage analytics and statistics
+- Implement result sharing functionality`
+  };
+
+  const typeEnhancement = typeSpecificEnhancements[projectType] || '';
+  
+  return basePrompt + typeEnhancement;
+}
+
+// Code enhancement function for extraordinary output quality
+function enhanceGeneratedCode(code, projectType) {
+  let enhancedCode = code;
+  
+  // Ensure proper HTML structure
+  if (!enhancedCode.includes('<!DOCTYPE html>')) {
+    enhancedCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${projectType} generated by MindForge AI">
+    <meta name="keywords" content="${projectType.toLowerCase()}, web development, AI generated">
+    <meta name="author" content="MindForge AI">
+    <title>${projectType} - MindForge AI</title>
+    <style>
+        /* Enhanced CSS with modern design patterns */
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --text-color: #333;
+            --bg-color: #fff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Enhanced animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Enhanced loading states */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Enhanced responsive design */
+        @media (max-width: 768px) {
+            :root {
+                --border-radius: 8px;
+            }
+        }
+        
+        /* Enhanced accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        /* Enhanced focus states */
+        button:focus,
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    ${enhancedCode}
+    
+    <script>
+        // Enhanced JavaScript with modern patterns
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Add intersection observer for animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe all major elements
+            document.querySelectorAll('section, .card, .feature, .container').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Enhanced error handling
+            window.addEventListener('error', function(e) {
+                console.error('Application error:', e.error);
+                // Could add error reporting here
+            });
+            
+            // Enhanced performance monitoring
+            if ('performance' in window) {
+                window.addEventListener('load', function() {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+                });
+            }
+        });
+    </script>
+</body>
+</html>`;
+  }
+  
+  // Add enhanced meta tags if missing
+  if (!enhancedCode.includes('<meta name="viewport"')) {
+    enhancedCode = enhancedCode.replace('<head>', `<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${projectType} generated by MindForge AI">
+    <meta name="theme-color" content="#667eea">`);
+  }
+  
+  // Add enhanced CSS custom properties if not present
+  if (!enhancedCode.includes(':root')) {
+    enhancedCode = enhancedCode.replace('<style>', `<style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --text-color: #333;
+            --bg-color: #fff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }`);
+  }
+  
+  // Add enhanced animations if not present
+  if (!enhancedCode.includes('@keyframes')) {
+    enhancedCode = enhancedCode.replace('</style>', `
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>`);
+  }
+  
+  // Add enhanced JavaScript if not present
+  if (!enhancedCode.includes('addEventListener')) {
+    enhancedCode = enhancedCode.replace('</body>', `
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>`);
+  }
+  
+  return enhancedCode;
 }
