@@ -1,0 +1,39 @@
+{
+  "name": "mindforge",
+  "version": "1.0.0",
+  "description": "AI-powered web development tool that generates complete web applications from text prompts using Google's Gemini API",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve .",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "vercel --prod",
+    "deploy:dev": "vercel"
+  },
+  "keywords": [
+    "ai",
+    "web-development",
+    "code-generation",
+    "gemini",
+    "vercel",
+    "html",
+    "css",
+    "javascript"
+  ],
+  "author": "Neel Prajapati",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/mindforge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/mindforge/issues"
+  },
+  "homepage": "https://mindforge.vercel.app",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
