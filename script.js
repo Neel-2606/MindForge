@@ -14,9 +14,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let selectedType = "Website";
   let isMobile = false;
 
-  // Check API availability on page load
-  checkAPIStatus();
-
   // 🃏 Card Clicks
   cards.forEach(card => {
     card.addEventListener("click", () => {
@@ -78,10 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
   generateBtn.onclick = async () => {
     const userInput = promptInput.value.trim();
     if (!userInput) return alert("Please enter your project idea.");
-
-    // Get selected API preference
-    const apiSelector = document.getElementById('apiSelector');
-    const preferredAPI = apiSelector ? apiSelector.value : null;
 
     // Show loading state
     generateBtn.textContent = "⏳ Generating...";
@@ -187,8 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           prompt: userInput, 
-          type: selectedType,
-          preferredAPI: preferredAPI
+          type: selectedType 
         }),
       });
 
@@ -200,15 +192,6 @@ document.addEventListener("DOMContentLoaded", function () {
       
       if (data.error) {
         throw new Error(data.error);
-      }
-
-      // Show which API was used
-      if (data.apiUsed) {
-        const apiStatus = document.getElementById('apiStatus');
-        if (apiStatus) {
-          apiStatus.textContent = `✅ Generated with ${data.apiUsed.toUpperCase()}`;
-          apiStatus.className = 'api-status';
-        }
       }
 
       let output = data.code || data.fallback;
@@ -511,38 +494,4 @@ document.addEventListener("DOMContentLoaded", function () {
     el.addEventListener("click", btn.onClick);
     toolbar.appendChild(el);
   });
-
-  // API Status Checking Function
-  async function checkAPIStatus() {
-    const apiStatus = document.getElementById('apiStatus');
-    if (!apiStatus) return;
-
-    try {
-      // Make a test request to check API availability
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: 'test',
-          type: 'Website'
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.error && data.error.includes('No API keys configured')) {
-        apiStatus.textContent = '❌ No API keys configured';
-        apiStatus.className = 'api-status error';
-      } else if (data.error && data.error.includes('No available APIs')) {
-        apiStatus.textContent = '⚠️ API keys invalid or unavailable';
-        apiStatus.className = 'api-status warning';
-      } else {
-        apiStatus.textContent = '✅ APIs available';
-        apiStatus.className = 'api-status';
-      }
-    } catch (error) {
-      apiStatus.textContent = '❌ API check failed';
-      apiStatus.className = 'api-status error';
-    }
-  }
 });
