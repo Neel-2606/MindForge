@@ -20,21 +20,55 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedType = card.getAttribute("data-type");
       buildSection.style.display = "block";
       promptInput.placeholder = `Describe the ${selectedType.toLowerCase()} you want to build...`;
-      buildSection.scrollIntoView({ behavior: "smooth" });
+      
+      // Smooth scroll to build section with navbar offset
+      const navbarHeight = 80;
+      const targetPosition = buildSection.offsetTop - navbarHeight;
+      
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
     });
   });
 
-  // 🚀 Navbar Build
-  document.querySelector('a[href="#build"]').addEventListener("click", e => {
-    e.preventDefault();
-    buildSection.style.display = "block";
-    buildSection.scrollIntoView({ behavior: "smooth" });
+  // 🚀 Smooth Scrolling for Navbar Links
+  document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const targetSection = document.querySelector(targetId);
+      
+      if (targetSection) {
+        // Calculate offset for fixed navbar (adjust 80px based on your navbar height)
+        const navbarHeight = 80;
+        const targetPosition = targetSection.offsetTop - navbarHeight;
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        
+        // Special handling for build section
+        if (targetId === '#build') {
+          buildSection.style.display = "block";
+        }
+      }
+    });
   });
 
   // 🎯 Start Building
   startBtn.addEventListener("click", () => {
     buildSection.style.display = "block";
-    buildSection.scrollIntoView({ behavior: "smooth" });
+    
+    // Smooth scroll to build section with navbar offset
+    const navbarHeight = 80;
+    const targetPosition = buildSection.offsetTop - navbarHeight;
+    
+    window.scrollTo({
+      top: targetPosition,
+      behavior: 'smooth'
+    });
   });
 
   // 🚀 Generate Button

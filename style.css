@@ -5,6 +5,10 @@
   font-family: 'Poppins', sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: #0f0f0f;
   color: #f0f0f0;
@@ -38,6 +42,28 @@ header.navbar {
   margin-left: 20px;
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.3s ease, transform 0.2s ease;
+  position: relative;
+}
+
+.navbar nav a:hover {
+  color: #00fff0;
+  transform: translateY(-2px);
+}
+
+.navbar nav a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -5px;
+  left: 0;
+  background: linear-gradient(90deg, #00fff0, #00bcd4);
+  transition: width 0.3s ease;
+}
+
+.navbar nav a:hover::after {
+  width: 100%;
 }
 
 .hero {
