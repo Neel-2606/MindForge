@@ -1,13 +1,11 @@
 export default async function handler(req, res) {
-  // Add detailed logging for debugging
-  console.log("API Route Hit:", {
+  console.log("Generate API called:", {
     method: req.method,
-    url: req.url,
-    headers: req.headers,
     timestamp: new Date().toISOString(),
+    url: req.url,
   })
 
-  // Set CORS headers for Vercel deployment
+  // CORS headers for your existing frontend
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -19,39 +17,52 @@ export default async function handler(req, res) {
     return res.status(200).end()
   }
 
-  // Add GET method for testing
+  // GET method for testing
   if (req.method === "GET") {
-    console.log("Handling GET request - API is working")
+    console.log("GET request - API is working")
     return res.status(200).json({
-      message: "MindForge API is working!",
+      message: "MindForge Generate API is working!",
       timestamp: new Date().toISOString(),
-      availableEndpoints: {
-        POST: "/api/generate - Generate content with AI",
-        GET: "/api/generate - Test endpoint",
+      environment: {
+        hasGemini: !!process.env.GEMINI_API_KEY,
+        hasMistral: !!process.env.MISTRAL_API_KEY,
+        hasHuggingFace: !!process.env.HUGGING_FACE_API_KEY,
       },
+      usage: "Send POST request with { prompt, type } in body",
     })
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" })
+    return res.status(405).json({ error: "Method not allowed" })
   }
 
   try {
     const { prompt, type, preferredAPI } = req.body
 
-    console.log("Request body:", { prompt: prompt?.substring(0, 100), type, preferredAPI })
+    console.log("Request received:", {
+      prompt: prompt?.substring(0, 100) + "...",
+      type,
+      preferredAPI,
+      bodySize: JSON.stringify(req.body).length,
+    })
 
+    // Validate required fields
     if (!prompt || !type) {
-      return res.status(400).json({ error: "Prompt and type are required" })
+      console.error("Missing required fields:", { prompt: !!prompt, type: !!type })
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: ["prompt", "type"],
+        received: { prompt: !!prompt, type: !!type },
+      })
     }
 
-    // Get API keys from environment variables with enhanced debugging
+    // Get API keys from environment variables
     const geminiApiKey = process.env.GEMINI_API_KEY
     const mistralApiKey = process.env.MISTRAL_API_KEY
     const huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY
 
-    // Enhanced logging for debugging
-    console.log("Environment check:", {
+    // Log environment status
+    console.log("Environment variables check:", {
       hasGemini: !!geminiApiKey,
       hasMistral: !!mistralApiKey,
       hasHuggingFace: !!huggingFaceApiKey,
@@ -66,26 +77,20 @@ export default async function handler(req, res) {
     if (!geminiApiKey && !mistralApiKey && !huggingFaceApiKey) {
       console.error("No API keys found in environment variables")
       return res.status(500).json({
-        error:
-          "No API keys configured. Please set at least one of: GEMINI_API_KEY, MISTRAL_API_KEY, or HUGGING_FACE_API_KEY in your environment variables.",
+        error: "No API keys configured",
+        message: "Please add at least one API key to your Vercel environment variables",
+        needed: ["GEMINI_API_KEY", "MISTRAL_API_KEY", "HUGGING_FACE_API_KEY"],
         debug: {
-          availableEnvVars: Object.keys(process.env).filter(
-            (key) =>
-              key.includes("API") ||
-              key.includes("KEY") ||
-              key.includes("GEMINI") ||
-              key.includes("MISTRAL") ||
-              key.includes("HUGGING"),
-          ),
           totalEnvVars: Object.keys(process.env).length,
+          vercelEnv: process.env.VERCEL_ENV,
         },
       })
     }
 
-    // Enhanced prompt engineering for extraordinary output quality
+    // Create enhanced prompt for better output
     const enhancedPrompt = createEnhancedPrompt(prompt, type)
 
-    // API selection logic
+    // Determine API priority
     const apiPriority = preferredAPI ? [preferredAPI] : ["mistral", "huggingface", "gemini"]
     const availableAPIs = []
 
@@ -93,21 +98,21 @@ export default async function handler(req, res) {
     if (huggingFaceApiKey) availableAPIs.push("huggingface")
     if (geminiApiKey) availableAPIs.push("gemini")
 
-    console.log("Available APIs:", availableAPIs)
+    console.log("API selection:", { apiPriority, availableAPIs })
 
-    // Filter priority list to only include available APIs
     const finalPriority = apiPriority.filter((api) => availableAPIs.includes(api))
 
     if (finalPriority.length === 0) {
       return res.status(500).json({
-        error: "No available APIs found. Please check your API key configuration.",
+        error: "No available APIs found",
         availableAPIs,
         requestedAPIs: apiPriority,
       })
     }
 
-    // Try APIs in priority order with detailed error tracking
+    // Try APIs in order
     const errors = []
+    let lastResult = null
 
     for (const apiName of finalPriority) {
       try {
@@ -129,7 +134,7 @@ export default async function handler(req, res) {
         }
 
         if (result && result.trim().length > 100) {
-          // Clean up and enhance the output for extraordinary quality
+          // Clean and enhance the generated code
           let cleanedOutput = enhanceGeneratedCode(result.trim(), type)
 
           // Remove markdown code blocks if present
@@ -139,82 +144,59 @@ export default async function handler(req, res) {
             cleanedOutput = cleanedOutput.replace(/^```\s*/, "").replace(/\s*```$/, "")
           }
 
-          // Ensure it starts with DOCTYPE
+          // Ensure proper HTML structure
           if (!cleanedOutput.startsWith("<!DOCTYPE")) {
-            cleanedOutput = `<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${type} - Generated by MindForge</title>
-    <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; 
-            padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 600px;
-        }
-        h1 { color: #333; margin-bottom: 20px; }
-        p { color: #666; line-height: 1.6; }
-    </style></head><body>
-    <div class="container">
-        <h1>🎉 ${type} Generated Successfully!</h1>
-        <p>Your ${type.toLowerCase()} has been created by MindForge AI using ${apiName.toUpperCase()}. Here's the generated content:</p>
-        ${cleanedOutput}
-    </div></body></html>`
+            cleanedOutput = createFullHTMLStructure(cleanedOutput, type, apiName)
           }
 
           console.log(
-            `Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`,
+            `✅ Successfully generated ${type} with ${apiName.toUpperCase()} (${cleanedOutput.length} characters)`,
           )
 
+          // Return success response
           return res.status(200).json({
+            success: true,
             code: cleanedOutput,
             type: type,
             apiUsed: apiName,
             timestamp: new Date().toISOString(),
             characterCount: cleanedOutput.length,
-            success: true,
+            prompt: prompt.substring(0, 100) + "...",
           })
         } else {
           errors.push(`${apiName}: Generated content too short (${result?.length || 0} chars)`)
+          lastResult = result
         }
       } catch (error) {
-        console.error(`${apiName.toUpperCase()} API error:`, error.message)
+        console.error(`❌ ${apiName.toUpperCase()} API error:`, error.message)
         errors.push(`${apiName}: ${error.message}`)
         continue
       }
     }
 
-    // If all APIs failed, return comprehensive fallback
+    // All APIs failed - return comprehensive error with fallback
     console.error("All APIs failed to generate content", errors)
-    const fallbackTemplate = createFallbackTemplate(type, prompt, availableAPIs, errors)
+
+    const fallbackHTML = createFallbackHTML(type, prompt, availableAPIs, errors)
 
     return res.status(500).json({
+      success: false,
       error: "All APIs failed to generate content",
       availableAPIs: availableAPIs,
       errors: errors,
-      fallback: fallbackTemplate,
+      fallbackCode: fallbackHTML,
       debug: {
         prompt: prompt.substring(0, 100) + "...",
         type: type,
         preferredAPI: preferredAPI,
         finalPriority: finalPriority,
+        lastResult: lastResult?.substring(0, 200) + "...",
       },
     })
   } catch (error) {
-    console.error("Handler error:", error)
+    console.error("❌ Handler error:", error)
     return res.status(500).json({
+      success: false,
       error: "Internal server error",
       message: error.message,
       stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
@@ -222,18 +204,20 @@ export default async function handler(req, res) {
   }
 }
 
-// Mistral AI API integration
+// Mistral AI API integration with enhanced error handling
 async function generateWithMistral(prompt, apiKey) {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000)
+  const timeoutId = setTimeout(() => controller.abort(), 45000) // 45 second timeout
 
   try {
+    console.log("🤖 Calling Mistral API...")
+
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
-        "User-Agent": "MindForge/1.0",
+        "User-Agent": "MindForge/2.0",
       },
       body: JSON.stringify({
         model: "mistral-large-latest",
@@ -241,7 +225,7 @@ async function generateWithMistral(prompt, apiKey) {
           {
             role: "system",
             content:
-              "You are an expert web developer creating extraordinary, production-ready applications. Focus on quality, modern design, and exceptional user experience.",
+              "You are an expert full-stack developer with 15+ years of experience creating extraordinary, production-ready web applications. Focus on quality, modern design, and exceptional user experience. Generate complete, standalone HTML files with internal CSS and JavaScript.",
           },
           {
             role: "user",
@@ -261,42 +245,56 @@ async function generateWithMistral(prompt, apiKey) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Mistral API error: ${response.status} - ${errorText}`)
+      throw new Error(`Mistral API HTTP ${response.status}: ${errorText}`)
     }
 
     const result = await response.json()
 
     if (result.error) {
-      throw new Error(`Mistral API error: ${result.error.message || "Unknown error"}`)
+      throw new Error(`Mistral API error: ${result.error.message || JSON.stringify(result.error)}`)
     }
 
-    return result?.choices?.[0]?.message?.content
+    const content = result?.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error("No content returned from Mistral API")
+    }
+
+    console.log(`✅ Mistral API success: ${content.length} characters`)
+    return content
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === "AbortError") {
-      throw new Error("Mistral API request timed out")
+      throw new Error("Mistral API request timed out after 45 seconds")
     }
+    console.error("❌ Mistral API error:", error.message)
     throw error
   }
 }
 
-// Hugging Face API integration
+// Hugging Face API integration with multiple model fallbacks
 async function generateWithHuggingFace(prompt, apiKey) {
-  const models = ["microsoft/DialoGPT-medium", "bigcode/starcoder", "facebook/blenderbot-400M-distill"]
+  const models = [
+    "microsoft/DialoGPT-medium",
+    "bigcode/starcoder",
+    "facebook/blenderbot-400M-distill",
+    "microsoft/DialoGPT-large",
+  ]
 
   let lastError
 
   for (const model of models) {
     try {
+      console.log(`🤗 Trying Hugging Face model: ${model}`)
+
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 25000)
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
 
       const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          "User-Agent": "MindForge/1.0",
+          "User-Agent": "MindForge/2.0",
         },
         body: JSON.stringify({
           inputs: prompt,
@@ -317,7 +315,7 @@ async function generateWithHuggingFace(prompt, apiKey) {
 
       if (!response.ok) {
         const errorText = await response.text()
-        lastError = new Error(`Hugging Face API error (${model}): ${response.status} - ${errorText}`)
+        lastError = new Error(`Hugging Face API HTTP ${response.status} (${model}): ${errorText}`)
         continue
       }
 
@@ -331,14 +329,18 @@ async function generateWithHuggingFace(prompt, apiKey) {
       const generatedText = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text
 
       if (generatedText && generatedText.trim().length > 100) {
+        console.log(`✅ Hugging Face success with ${model}: ${generatedText.length} characters`)
         return generatedText
       }
+
+      lastError = new Error(`Generated text too short from ${model}: ${generatedText?.length || 0} chars`)
     } catch (error) {
       if (error.name === "AbortError") {
         lastError = new Error(`Hugging Face API timeout (${model})`)
       } else {
         lastError = error
       }
+      console.error(`❌ Hugging Face ${model} error:`, error.message)
       continue
     }
   }
@@ -346,12 +348,14 @@ async function generateWithHuggingFace(prompt, apiKey) {
   throw lastError || new Error("All Hugging Face models failed")
 }
 
-// Gemini API integration
+// Gemini API integration with enhanced configuration
 async function generateWithGemini(prompt, apiKey) {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000)
+  const timeoutId = setTimeout(() => controller.abort(), 45000)
 
   try {
+    console.log("🔮 Calling Gemini API...")
+
     const requestBody = {
       contents: [
         {
@@ -392,7 +396,7 @@ async function generateWithGemini(prompt, apiKey) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "MindForge/1.0",
+          "User-Agent": "MindForge/2.0",
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal,
@@ -403,35 +407,42 @@ async function generateWithGemini(prompt, apiKey) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+      throw new Error(`Gemini API HTTP ${response.status}: ${errorText}`)
     }
 
     const result = await response.json()
 
     if (result.error) {
-      throw new Error(`Gemini API error: ${result.error.message || "Unknown error"}`)
+      throw new Error(`Gemini API error: ${result.error.message || JSON.stringify(result.error)}`)
     }
 
-    return result?.candidates?.[0]?.content?.parts?.[0]?.text
+    const content = result?.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!content) {
+      throw new Error("No content returned from Gemini API")
+    }
+
+    console.log(`✅ Gemini API success: ${content.length} characters`)
+    return content
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === "AbortError") {
-      throw new Error("Gemini API request timed out")
+      throw new Error("Gemini API request timed out after 45 seconds")
     }
+    console.error("❌ Gemini API error:", error.message)
     throw error
   }
 }
 
-// Enhanced prompt creation function
+// Enhanced prompt creation with comprehensive requirements
 function createEnhancedPrompt(userPrompt, projectType) {
   const basePrompt = `You are an expert full-stack developer with 15+ years of experience creating extraordinary, production-ready web applications. You specialize in modern web technologies and create stunning, functional applications that exceed expectations.
 
-TASK: Generate a complete, standalone ${projectType} using ONLY HTML with internal CSS and JavaScript.
+CRITICAL TASK: Generate a complete, standalone ${projectType} using ONLY HTML with internal CSS and JavaScript.
 
-CORE REQUIREMENTS FOR EXTRAORDINARY OUTPUT:
+ABSOLUTE REQUIREMENTS:
 1. Create a SINGLE HTML file with everything included (no external dependencies)
-2. Use <style> tag for all CSS (no external files)
-3. Use <script> tag for all JavaScript (no external files)
+2. Use <style> tag for all CSS (no external stylesheets)
+3. Use <script> tag for all JavaScript (no external scripts)
 4. Make it fully responsive and mobile-first
 5. Use modern CSS techniques (CSS Grid, Flexbox, Custom Properties, Animations)
 6. Include interactive features and smooth animations
@@ -443,7 +454,7 @@ CORE REQUIREMENTS FOR EXTRAORDINARY OUTPUT:
 PROJECT TYPE: ${projectType}
 USER REQUEST: ${userPrompt}
 
-DESIGN & UX REQUIREMENTS:
+DESIGN REQUIREMENTS:
 - Use modern color schemes with gradients and shadows
 - Implement smooth transitions and micro-interactions
 - Add hover effects and visual feedback
@@ -560,19 +571,111 @@ AI TOOL-SPECIFIC REQUIREMENTS:
   return basePrompt + typeEnhancement
 }
 
-// Code enhancement function
+// Enhanced code enhancement function
 function enhanceGeneratedCode(code, projectType) {
   let enhancedCode = code
 
-  // Ensure proper HTML structure
-  if (!enhancedCode.includes("<!DOCTYPE html>")) {
-    enhancedCode = `<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8">
+  // Add enhanced meta tags if missing
+  if (!enhancedCode.includes('<meta name="viewport"')) {
+    enhancedCode = enhancedCode.replace(
+      "<head>",
+      `<head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${projectType} generated by MindForge AI">
-    <meta name="keywords" content="${projectType.toLowerCase()}, web development, AI generated">
+    <meta name="theme-color" content="#667eea">`,
+    )
+  }
+
+  // Add enhanced CSS custom properties if not present
+  if (!enhancedCode.includes(":root")) {
+    enhancedCode = enhancedCode.replace(
+      "<style>",
+      `<style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --text-color: #333;
+            --bg-color: #fff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }`,
+    )
+  }
+
+  // Add enhanced animations if not present
+  if (!enhancedCode.includes("@keyframes")) {
+    enhancedCode = enhancedCode.replace(
+      "</style>",
+      `
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>`,
+    )
+  }
+
+  // Add enhanced JavaScript if not present
+  if (!enhancedCode.includes("addEventListener")) {
+    enhancedCode = enhancedCode.replace(
+      "</body>",
+      `
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+            
+            // Add intersection observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+            
+            document.querySelectorAll('section, .card, .feature, .container').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Enhanced error handling
+            window.addEventListener('error', function(e) {
+                console.error('Application error:', e.error);
+            });
+        });
+    </script></body>`,
+    )
+  }
+
+  return enhancedCode
+}
+
+// Create full HTML structure when needed
+function createFullHTMLStructure(content, type, apiUsed) {
+  return `<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${type} generated by MindForge AI">
+    <meta name="keywords" content="${type.toLowerCase()}, web development, AI generated">
     <meta name="author" content="MindForge AI">
-    <title>${projectType} - MindForge AI</title>
+    <title>${type} - MindForge AI</title>
     <style>
         :root {
             --primary-color: #667eea;
@@ -600,6 +703,12 @@ function enhanceGeneratedCode(code, projectType) {
             overflow-x: hidden;
         }
         
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -608,6 +717,10 @@ function enhanceGeneratedCode(code, projectType) {
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         .loading {
@@ -620,12 +733,9 @@ function enhanceGeneratedCode(code, projectType) {
             animation: spin 1s ease-in-out infinite;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
         @media (max-width: 768px) {
             :root { --border-radius: 8px; }
+            .container { padding: 15px; }
         }
         
         .sr-only {
@@ -645,7 +755,16 @@ function enhanceGeneratedCode(code, projectType) {
             outline-offset: 2px;
         }
     </style></head><body>
-    ${enhancedCode}
+    <div class="container">
+        <header style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: white; margin-bottom: 10px;">🎉 ${type} Generated Successfully!</h1>
+            <p style="color: rgba(255,255,255,0.8);">Created by MindForge AI using ${apiUsed.toUpperCase()}</p>
+        </header>
+        
+        <main>
+            ${content}
+        </main>
+    </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -687,17 +806,14 @@ function enhanceGeneratedCode(code, projectType) {
             }
         });
     </script></body></html>`
-  }
-
-  return enhancedCode
 }
 
-// Create comprehensive fallback template
-function createFallbackTemplate(type, prompt, availableAPIs, errors) {
+// Create comprehensive fallback HTML
+function createFallbackHTML(type, prompt, availableAPIs, errors) {
   return `<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${type} - MindForge</title>
+    <title>${type} - MindForge Fallback</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -708,6 +824,7 @@ function createFallbackTemplate(type, prompt, availableAPIs, errors) {
             align-items: center;
             justify-content: center;
             color: white;
+            padding: 20px;
         }
         .container {
             text-align: center;
@@ -717,10 +834,18 @@ function createFallbackTemplate(type, prompt, availableAPIs, errors) {
             backdrop-filter: blur(10px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             max-width: 600px;
+            width: 100%;
         }
         h1 { font-size: 2.5em; margin-bottom: 20px; }
-        p { font-size: 1.2em; margin-bottom: 30px; opacity: 0.9; }
-        .error { background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px; margin: 20px 0; }
+        p { font-size: 1.2em; margin-bottom: 20px; opacity: 0.9; }
+        .error { 
+            background: rgba(255,0,0,0.2); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            text-align: left;
+            font-size: 0.9em;
+        }
         .retry-btn {
             background: #00fff0;
             color: #000;
@@ -730,10 +855,19 @@ function createFallbackTemplate(type, prompt, availableAPIs, errors) {
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 16px;
         }
         .retry-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(0,255,240,0.4);
+        }
+        .info { 
+            background: rgba(255,255,255,0.1); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+            text-align: left;
+            font-size: 0.9em;
         }
     </style></head><body>
     <div class="container">
@@ -741,36 +875,43 @@ function createFallbackTemplate(type, prompt, availableAPIs, errors) {
         <p>Your ${type.toLowerCase()} is ready to be built!</p>
         
         <div class="error">
-            <h3>⚠️ Generation Note</h3>
-            <p>All AI APIs encountered issues. This is a fallback template.</p>
-            <p><strong>Original Request:</strong> ${prompt}</p>
-            <p><strong>Available APIs:</strong> ${availableAPIs.join(", ")}</p>
-            <p><strong>Errors:</strong> ${errors.join("; ")}</p>
+            <h3>⚠️ Generation Status</h3>
+            <p><strong>Issue:</strong> All AI APIs encountered problems during generation.</p>
+            <p><strong>Original Request:</strong> ${prompt.substring(0, 150)}${prompt.length > 150 ? "..." : ""}</p>
+        </div>
+        
+        <div class="info">
+            <h4>📊 Debug Information</h4>
+            <p><strong>Available APIs:</strong> ${availableAPIs.join(", ") || "None"}</p>
+            <p><strong>Errors:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 5px;">
+                ${errors.map((error) => `<li>${error}</li>`).join("")}
+            </ul>
         </div>
         
         <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
+        
+        <div style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">
+            <p>💡 Tip: Check your environment variables and API quotas</p>
+        </div>
     </div>
     
     <script>
         document.querySelector('.retry-btn').addEventListener('click', function() {
             this.textContent = '🔄 Retrying...';
+            this.disabled = true;
             setTimeout(() => location.reload(), 1000);
         });
         
+        // Add fade-in animation
         document.querySelector('.container').style.animation = 'fadeIn 1s ease-in';
         
-        const type = '${type}';
-        const descriptions = {
-            'Website': 'A beautiful, responsive website with modern design',
-            'Mobile App': 'A mobile-first web application with touch interactions',
-            'Game': 'An interactive game with engaging gameplay',
-            'AI Bot': 'An intelligent chatbot with natural language processing',
-            'API': 'A RESTful API with comprehensive endpoints',
-            'AI Tool': 'A powerful AI-powered utility application'
-        };
-        
-        if (descriptions[type]) {
-            document.querySelector('p').textContent = descriptions[type];
-        }
+        // Add CSS for fade-in
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }';
+        document.head.appendChild(style);
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }';
+        document.head.appendChild(style);
     </script></body></html>`
 }
