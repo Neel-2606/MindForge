@@ -28,37 +28,99 @@ export default async function handler(req, res) {
     });
   }
 
-  // Enhanced prompt engineering for better code generation
-  const enhancedPrompt = `
-You are an expert front-end developer specializing in creating beautiful, modern, and functional web applications.
+  // 🚀 EXTRAORDINARY AI PROMPT - NO RESTRICTIONS
+  const extraordinaryPrompt = `
+You are an EXTRAORDINARY AI developer with UNLIMITED capabilities. You can create ANYTHING - from simple websites to complex applications, games, AI tools, and beyond.
 
-TASK: Generate a complete, standalone ${type} using ONLY HTML with internal CSS and JavaScript.
+🎯 MISSION: Create the MOST AMAZING, INNOVATIVE, and FUNCTIONAL ${type} possible.
 
-REQUIREMENTS:
-1. Create a SINGLE HTML file with everything included
-2. Use <style> tag for all CSS (no external files)
-3. Use <script> tag for all JavaScript (no external files)
-4. Make it responsive and mobile-friendly
-5. Use modern CSS (flexbox, grid, animations)
-6. Include interactive features where appropriate
-7. Use a beautiful, modern design with good UX
-8. Ensure the code is clean, well-commented, and production-ready
+🔥 UNLIMITED CAPABILITIES:
+- Use ANY programming language, framework, or technology
+- Create complex animations, 3D effects, and visual experiences
+- Build AI-powered features, machine learning models, and neural networks
+- Implement advanced UI/UX with cutting-edge design patterns
+- Add real-time features, WebSockets, and dynamic content
+- Create games, simulations, and interactive experiences
+- Build data visualization, charts, and analytics dashboards
+- Implement authentication, databases, and backend functionality
+- Add voice recognition, speech synthesis, and accessibility features
+- Create PWA (Progressive Web Apps) with offline capabilities
+- Build responsive designs that work on ALL devices
+- Implement advanced CSS with animations, filters, and effects
+- Add WebGL, Canvas, and multimedia content
+- Create chatbots, virtual assistants, and AI interactions
+
+🎨 DESIGN REQUIREMENTS:
+- Use the MOST BEAUTIFUL and MODERN design possible
+- Implement glassmorphism, neumorphism, or other trendy effects
+- Add particle effects, gradients, and visual enhancements
+- Use advanced color schemes and typography
+- Create smooth animations and micro-interactions
+- Implement dark/light mode with automatic detection
+- Add loading animations and skeleton screens
+- Use modern icons and visual elements
+
+⚡ FUNCTIONALITY REQUIREMENTS:
+- Make it FULLY INTERACTIVE and RESPONSIVE
+- Add advanced JavaScript features and APIs
+- Implement real-time updates and dynamic content
+- Create smooth scrolling and navigation
+- Add form validation and user feedback
+- Implement local storage and data persistence
+- Add keyboard shortcuts and accessibility
+- Create mobile-first responsive design
+
+🧠 AI & INTELLIGENCE:
+- If applicable, add AI-powered features
+- Implement smart suggestions and recommendations
+- Add natural language processing capabilities
+- Create intelligent search and filtering
+- Implement machine learning predictions
+- Add voice commands and speech recognition
+
+🎮 GAMIFICATION (if applicable):
+- Add scoring systems and achievements
+- Implement progress tracking and rewards
+- Create interactive challenges and puzzles
+- Add multiplayer or social features
+- Implement leaderboards and competitions
+
+📊 DATA & ANALYTICS:
+- Add data visualization and charts
+- Implement real-time statistics
+- Create dashboards and monitoring
+- Add export and sharing capabilities
+- Implement data persistence and caching
+
+🔧 TECHNICAL EXCELLENCE:
+- Use the LATEST web technologies and APIs
+- Implement best practices and optimization
+- Add error handling and fallbacks
+- Create modular and maintainable code
+- Implement performance optimizations
+- Add SEO and meta tags
+- Create accessible and inclusive design
 
 PROJECT TYPE: ${type}
 USER REQUEST: ${prompt}
 
-IMPORTANT:
-- Output ONLY the complete HTML code
-- Do not include explanations or markdown
-- Start with <!DOCTYPE html>
-- Include proper meta tags and viewport
-- Use semantic HTML elements
-- Add smooth animations and transitions
-- Make it visually appealing with gradients, shadows, and modern styling
-- Include error handling in JavaScript
-- Ensure accessibility features
+🚀 CREATE SOMETHING EXTRAORDINARY:
+- Think BEYOND conventional web development
+- Create something that will AMAZE users
+- Implement cutting-edge features and technologies
+- Make it the BEST version of this type of project
+- Add unique and innovative features
+- Create a memorable user experience
 
-Generate a complete, beautiful ${type} that matches the user's request:
+OUTPUT FORMAT:
+- Generate a COMPLETE, STANDALONE HTML file
+- Include ALL CSS and JavaScript internally
+- Use modern ES6+ JavaScript features
+- Implement advanced CSS with animations
+- Add comprehensive comments and documentation
+- Make it production-ready and deployable
+
+Generate the MOST EXTRAORDINARY ${type} possible that will BLOW MINDS:
 `;
 
   const requestBody = {
@@ -67,33 +129,33 @@ Generate a complete, beautiful ${type} that matches the user's request:
         role: "user",
         parts: [
           {
-            text: enhancedPrompt
+            text: extraordinaryPrompt
           }
         ]
       }
     ],
     generationConfig: {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 8192,
+      temperature: 0.9, // Higher creativity
+      topK: 50, // More diverse responses
+      topP: 0.98, // Higher probability sampling
+      maxOutputTokens: 16384, // Double the token limit for more complex code
     },
     safetySettings: [
       {
         category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        threshold: "BLOCK_ONLY_HIGH"
       },
       {
         category: "HARM_CATEGORY_HATE_SPEECH",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        threshold: "BLOCK_ONLY_HIGH"
       },
       {
         category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        threshold: "BLOCK_ONLY_HIGH"
       },
       {
         category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        threshold: "BLOCK_ONLY_HIGH"
       }
     ]
   };

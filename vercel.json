@@ -2,8 +2,8 @@
   "version": 2,
   "functions": {
     "api/generate.js": {
-      "maxDuration": 30,
-      "memory": 1024
+      "maxDuration": 60,
+      "memory": 3008
     }
   },
   "routes": [
