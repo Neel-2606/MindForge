@@ -28,51 +28,37 @@ export default async function handler(req, res) {
     });
   }
 
-  // 🎯 FOCUSED AI PROMPT - SINGLE HTML FILE
-  const focusedPrompt = `
-You are an expert web developer. Create a BEAUTIFUL, FUNCTIONAL, and MODERN ${type} in a SINGLE HTML file.
+  // Enhanced prompt engineering for better code generation
+  const enhancedPrompt = `
+You are an expert front-end developer specializing in creating beautiful, modern, and functional web applications.
 
-🎯 REQUIREMENTS:
-- Create ONE complete HTML file with everything included
-- Use <style> tag for ALL CSS (no external files)
-- Use <script> tag for ALL JavaScript (no external files)
-- Make it responsive and mobile-friendly
-- Use modern CSS (flexbox, grid, animations)
-- Include interactive features where appropriate
-- Use beautiful, modern design with good UX
+TASK: Generate a complete, standalone ${type} using ONLY HTML with internal CSS and JavaScript.
 
-🎨 DESIGN FEATURES:
-- Modern color scheme with gradients
-- Smooth animations and transitions
-- Glassmorphism or neumorphism effects
-- Responsive design for all devices
-- Beautiful typography and spacing
-- Interactive hover effects
-- Loading animations
-
-⚡ FUNCTIONALITY:
-- Fully interactive and responsive
-- Modern JavaScript features (ES6+)
-- Local storage for data persistence
-- Form validation and user feedback
-- Smooth scrolling and navigation
-- Mobile-first design approach
+REQUIREMENTS:
+1. Create a SINGLE HTML file with everything included
+2. Use <style> tag for all CSS (no external files)
+3. Use <script> tag for all JavaScript (no external files)
+4. Make it responsive and mobile-friendly
+5. Use modern CSS (flexbox, grid, animations)
+6. Include interactive features where appropriate
+7. Use a beautiful, modern design with good UX
+8. Ensure the code is clean, well-commented, and production-ready
 
 PROJECT TYPE: ${type}
 USER REQUEST: ${prompt}
 
-IMPORTANT RULES:
-1. Output ONLY the complete HTML code
-2. Do NOT include explanations or markdown
-3. Start with <!DOCTYPE html>
-4. Include proper meta tags and viewport
-5. Use semantic HTML elements
-6. Add smooth animations and transitions
-7. Make it visually appealing
-8. Include error handling in JavaScript
-9. Ensure accessibility features
+IMPORTANT:
+- Output ONLY the complete HTML code
+- Do not include explanations or markdown
+- Start with <!DOCTYPE html>
+- Include proper meta tags and viewport
+- Use semantic HTML elements
+- Add smooth animations and transitions
+- Make it visually appealing with gradients, shadows, and modern styling
+- Include error handling in JavaScript
+- Ensure accessibility features
 
-Generate a complete, beautiful ${type} that matches the user's request. Output ONLY the HTML code:
+Generate a complete, beautiful ${type} that matches the user's request:
 `;
 
   const requestBody = {
@@ -81,16 +67,16 @@ Generate a complete, beautiful ${type} that matches the user's request. Output O
         role: "user",
         parts: [
           {
-            text: focusedPrompt
+            text: enhancedPrompt
           }
         ]
       }
     ],
     generationConfig: {
-      temperature: 0.7, // Balanced creativity
-      topK: 40, // Good diversity
-      topP: 0.95, // High quality sampling
-      maxOutputTokens: 8192, // Reasonable token limit
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
     },
     safetySettings: [
       {
