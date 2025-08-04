@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "npx serve .",
     "start": "npx serve .",
-    "build": "echo 'No build step required for static site'",
     "deploy": "vercel --prod",
     "deploy:dev": "vercel"
   },
