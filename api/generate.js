@@ -1,375 +1,190 @@
-export default async function handler(req, res) {
-  // Set CORS headers first
-  res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+import { Configuration, OpenAIApi } from "openai"
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end()
-  }
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
-  if (req.method === "GET") {
-    return res.status(200).json({
-      message: "MindForge API is working!",
-      timestamp: new Date().toISOString(),
-      environment: {
-        hasMistral: !!process.env.MISTRAL_API_KEY,
-        hasHuggingFace: !!process.env.HUGGING_FACE_API_KEY,
-        hasGemini: !!process.env.GEMINI_API_KEY,
-      },
-    })
-  }
+const openai = new OpenAIApi(configuration)
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
-
-  try {
-    const { prompt, type = "Website" } = req.body || {}
-
-    // Validate input
-    if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Valid prompt is required",
-      })
-    }
-
-    // Get API keys with fallback
-    const mistralKey = process.env.MISTRAL_API_KEY
-    const huggingFaceKey = process.env.HUGGING_FACE_API_KEY
-    const geminiKey = process.env.GEMINI_API_KEY
-
-    if (!mistralKey && !huggingFaceKey && !geminiKey) {
-      return res.status(500).json({
-        success: false,
-        error: "No API keys configured",
-        fallbackCode: createFallbackHTML(type, prompt),
-      })
-    }
-
-    // Create simple, effective prompt
-    const simplePrompt = `Create a complete HTML file for: ${prompt}
-
-Requirements:
-- Single HTML file with internal CSS and JavaScript
-- Responsive design
-- Modern, clean interface
-- Type: ${type}
-
-Return only the HTML code, no explanations.`
-
-    console.log(`Generating ${type} with prompt length: ${simplePrompt.length}`)
-
-    // Try APIs in priority order: Mistral -> Hugging Face -> Gemini
-    let result = null
-    let usedAPI = null
-
-    // Try Mistral first
-    if (mistralKey && !result) {
-      try {
-        console.log("Trying Mistral...")
-        result = await callMistralAPI(simplePrompt, mistralKey)
-        if (result) usedAPI = "mistral"
-      } catch (error) {
-        console.log("Mistral failed:", error.message)
-      }
-    }
-
-    // Try Hugging Face second
-    if (huggingFaceKey && !result) {
-      try {
-        console.log("Trying Hugging Face...")
-        result = await callHuggingFaceAPI(simplePrompt, huggingFaceKey)
-        if (result) usedAPI = "huggingface"
-      } catch (error) {
-        console.log("Hugging Face failed:", error.message)
-      }
-    }
-
-    // Try Gemini last
-    if (geminiKey && !result) {
-      try {
-        console.log("Trying Gemini...")
-        result = await callGeminiAPI(simplePrompt, geminiKey)
-        if (result) usedAPI = "gemini"
-      } catch (error) {
-        console.log("Gemini failed:", error.message)
-      }
-    }
-
-    if (result && result.length > 200) {
-      // Clean the result
-      let cleanCode = cleanHTMLResult(result)
-
-      // Ensure it's a complete HTML document
-      if (!cleanCode.toLowerCase().includes("<!doctype") && !cleanCode.toLowerCase().includes("<html")) {
-        cleanCode = wrapInHTMLStructure(cleanCode, type)
-      }
-
-      console.log(`Success with ${usedAPI}: ${cleanCode.length} characters`)
-
-      return res.status(200).json({
-        success: true,
-        code: cleanCode,
-        type: type,
-        apiUsed: usedAPI,
-        timestamp: new Date().toISOString(),
-        characterCount: cleanCode.length,
-      })
-    }
-
-    // All APIs failed - return fallback
-    console.log("All APIs failed, returning fallback")
-    return res.status(200).json({
-      success: true,
-      code: createFallbackHTML(type, prompt),
-      type: type,
-      apiUsed: "fallback",
-      timestamp: new Date().toISOString(),
-      message: "Generated using fallback template",
-    })
-  } catch (error) {
-    console.error("Handler error:", error)
-
-    // Return a working fallback even on error
-    const { prompt = "error", type = "Website" } = req.body || {}
-
-    return res.status(200).json({
-      success: true,
-      code: createFallbackHTML(type, prompt),
-      type: type,
-      apiUsed: "fallback",
-      timestamp: new Date().toISOString(),
-      message: "Generated using fallback due to error",
-    })
-  }
-}
-
-// Simplified Mistral API call
-async function callMistralAPI(prompt, apiKey) {
-  const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "mistral-large-latest",
-      messages: [
-        {
-          role: "system",
-          content: "You are a web developer. Create complete HTML files with internal CSS and JavaScript. Be concise.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 8192,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Mistral API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data?.choices?.[0]?.message?.content
-}
-
-// Simplified Hugging Face API call
-async function callHuggingFaceAPI(prompt, apiKey) {
-  const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 4096,
-        temperature: 0.3,
-        top_p: 0.9,
-      },
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Hugging Face API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
-}
-
-// Simplified Gemini API call
-async function callGeminiAPI(prompt, apiKey) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 8192,
-        },
-      }),
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text
-}
-
-// Clean HTML result
-function cleanHTMLResult(html) {
-  if (!html || typeof html !== "string") return ""
-
-  let cleaned = html.trim()
-
-  // Remove markdown code blocks
-  if (cleaned.startsWith("```html")) {
-    cleaned = cleaned.replace(/^```html\s*/, "").replace(/\s*```$/, "")
-  } else if (cleaned.startsWith("```")) {
-    cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "")
-  }
-
-  return cleaned.trim()
-}
-
-// Wrap content in HTML structure
-function wrapInHTMLStructure(content, type) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${type} - MindForge</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      line-height: 1.6; 
-      color: #333;
-      background: #f5f5f5;
-    }
-    .container { 
-      max-width: 1200px; 
-      margin: 0 auto; 
-      padding: 1rem; 
-    }
-    @media (max-width: 768px) {
-      .container { padding: 0.5rem; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    ${content}
-  </div>
-  <script>
-    console.log('${type} created with MindForge AI');
-  </script>
-</body>
-</html>`
-}
-
-// Create fallback HTML when APIs fail
-function createFallbackHTML(type, prompt) {
+const createFallbackHTML = (prompt, type) => {
   const typeTemplates = {
     Website: `
-      <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; text-align: center; border-radius: 12px; margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Welcome to Our Website</h1>
-        <p style="font-size: 1.2rem; opacity: 0.9;">Built with MindForge AI</p>
+      <style>
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 16px; margin-bottom: 3rem; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 700; }
+        .hero p { font-size: 1.3rem; opacity: 0.9; margin-bottom: 2rem; }
+        .cta-btn { background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 1rem 2rem; border-radius: 50px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; }
+        .cta-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 3rem 0; }
+        .feature-card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+        .feature-card:hover { transform: translateY(-8px); }
+        .feature-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .feature-card h3 { color: #333; margin-bottom: 1rem; font-size: 1.5rem; }
+        .feature-card p { color: #666; line-height: 1.6; }
+      </style>
+      <header class="hero">
+        <h1>Welcome to Our Platform</h1>
+        <p>Built with cutting-edge technology and modern design principles</p>
+        <button class="cta-btn" onclick="alert('Getting started!')">Get Started</button>
       </header>
-      <main style="display: grid; gap: 2rem;">
-        <section style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-          <h2 style="color: #333; margin-bottom: 1rem;">About Us</h2>
-          <p style="color: #666; line-height: 1.6;">This website was generated based on your request: "${prompt.substring(0, 100)}..."</p>
-        </section>
-        <section style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-          <h2 style="color: #333; margin-bottom: 1rem;">Features</h2>
-          <ul style="color: #666; line-height: 1.8;">
-            <li>Responsive design</li>
-            <li>Modern styling</li>
-            <li>Clean layout</li>
-          </ul>
+      <main>
+        <div class="features">
+          <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h3>Fast Performance</h3>
+            <p>Lightning-fast loading times and smooth interactions for the best user experience.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>Mobile First</h3>
+            <p>Fully responsive design that works perfectly on all devices and screen sizes.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h3>Modern Design</h3>
+            <p>Beautiful, clean interface with attention to detail and user experience.</p>
+          </div>
+        </div>
+        <section style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 3rem; border-radius: 16px; text-align: center; margin: 3rem 0;">
+          <h2 style="font-size: 2rem; margin-bottom: 1rem;">Your Request</h2>
+          <p style="font-size: 1.1rem; opacity: 0.9;">"${prompt.substring(0, 150)}..."</p>
         </section>
       </main>`,
 
     "Mobile App": `
-      <div style="max-width: 375px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; text-align: center;">
-          <h1 style="font-size: 1.5rem;">Mobile App</h1>
-        </header>
-        <main style="padding: 1rem;">
-          <p style="margin-bottom: 1rem; color: #666;">App request: "${prompt.substring(0, 80)}..."</p>
-          <div style="display: grid; gap: 1rem;">
-            <button style="background: #667eea; color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1rem;">Get Started</button>
-            <button style="background: #f8f9fa; color: #333; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; font-size: 1rem;">Learn More</button>
+      <style>
+        .phone-frame { max-width: 375px; margin: 0 auto; background: #000; padding: 8px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .screen { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 22px; overflow: hidden; }
+        .status-bar { display: flex; justify-content: space-between; padding: 0.5rem 1rem; color: white; font-size: 0.9rem; font-weight: 500; }
+        .app-header { background: rgba(255,255,255,0.1); color: white; padding: 1.5rem 1rem; text-align: center; backdrop-filter: blur(10px); }
+        .app-content { background: #f8f9fa; padding: 1.5rem; min-height: 400px; }
+        .feature-list { display: grid; gap: 1rem; margin: 1rem 0; }
+        .feature-item { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 1rem; }
+        .feature-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; }
+        .bottom-nav { display: flex; background: white; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; padding: 1rem; text-align: center; color: #666; cursor: pointer; transition: all 0.3s ease; }
+        .nav-item.active { color: #667eea; background: rgba(102, 126, 234, 0.1); }
+      </style>
+      <div class="phone-frame">
+        <div class="screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>100%</span>
           </div>
-        </main>
+          <div class="app-header">
+            <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Mobile App</h1>
+            <p style="opacity: 0.9;">Your request: "${prompt.substring(0, 60)}..."</p>
+          </div>
+          <div class="app-content">
+            <div class="feature-list">
+              <div class="feature-item">
+                <div class="feature-icon">🏠</div>
+                <div>
+                  <h4 style="margin-bottom: 0.25rem;">Home</h4>
+                  <p style="color: #666; font-size: 0.9rem;">Main dashboard</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">⚙️</div>
+                <div>
+                  <h4 style="margin-bottom: 0.25rem;">Settings</h4>
+                  <p style="color: #666; font-size: 0.9rem;">App preferences</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">📊</div>
+                <div>
+                  <h4 style="margin-bottom: 0.25rem;">Analytics</h4>
+                  <p style="color: #666; font-size: 0.9rem;">View statistics</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active">🏠</div>
+            <div class="nav-item">🔍</div>
+            <div class="nav-item">❤️</div>
+            <div class="nav-item">👤</div>
+          </div>
+        </div>
       </div>`,
 
     Game: `
-      <div style="background: #1a1a1a; color: white; padding: 2rem; border-radius: 12px; text-align: center;">
-        <h1 style="color: #00ff88; margin-bottom: 1rem; font-size: 2rem;">🎮 Game</h1>
-        <p style="margin-bottom: 2rem; color: #ccc;">Game concept: "${prompt.substring(0, 80)}..."</p>
-        <div style="background: #333; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
-          <p style="font-size: 1.2rem; margin-bottom: 1rem;">Score: 0</p>
-          <button style="background: #00ff88; color: #1a1a1a; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; cursor: pointer;" onclick="alert('Game feature coming soon!')">Start Game</button>
+      <style>
+        .game-container { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 2rem; border-radius: 20px; text-align: center; max-width: 600px; margin: 0 auto; }
+        .game-header { margin-bottom: 2rem; }
+        .game-title { font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(45deg, #00ff88, #00ccff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .game-area { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 3rem; margin: 2rem 0; border: 2px solid rgba(255,255,255,0.1); }
+        .score-board { display: flex; justify-content: space-around; margin-bottom: 2rem; }
+        .score-item { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; backdrop-filter: blur(10px); }
+        .score-value { font-size: 2rem; font-weight: bold; color: #00ff88; }
+        .game-controls { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .game-btn { background: linear-gradient(135deg, #00ff88, #00ccff); color: #1e3c72; border: none; padding: 1rem 2rem; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; }
+        .game-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,255,136,0.3); }
+        .game-btn.secondary { background: rgba(255,255,255,0.2); color: white; }
+      </style>
+      <div class="game-container">
+        <div class="game-header">
+          <h1 class="game-title">🎮 Game Zone</h1>
+          <p style="opacity: 0.9; font-size: 1.1rem;">Game concept: "${prompt.substring(0, 80)}..."</p>
         </div>
-      </div>`,
+        <div class="score-board">
+          <div class="score-item">
+            <div class="score-value">0</div>
+            <div>Score</div>
+          </div>
+          <div class="score-item">
+            <div class="score-value">1</div>
+            <div>Level</div>
+          </div>
+          <div class="score-item">
+            <div class="score-value">3</div>
+            <div>Lives</div>
+          </div>
+        </div>
+        <div class="game-area">
+          <p style="font-size: 1.3rem; margin-bottom: 1rem;">🎯 Ready to Play?</p>
+          <p style="opacity: 0.8;">Click Start to begin your adventure!</p>
+        </div>
+        <div class="game-controls">
+          <button class="game-btn" onclick="startGame()">Start Game</button>
+          <button class="game-btn secondary" onclick="showInstructions()">Instructions</button>
+          <button class="game-btn secondary" onclick="showHighScores()">High Scores</button>
+        </div>
+      </div>
+      <script>
+        function startGame() { alert('🎮 Game starting soon! Get ready!'); }
+        function showInstructions() { alert('📖 Use arrow keys to move, space to jump!'); }
+        function showHighScores() { alert('🏆 Your best score: 0 points'); }
+      </script>`,
   }
 
-  const template = typeTemplates[type] || typeTemplates.Website
+  return typeTemplates[type] || `<p>No template available for ${type}</p>`
+}
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${type} - MindForge</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      background: #f5f5f5; 
-      padding: 1rem;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+export default async function handler(req, res) {
+  const { prompt, type } = req.body
+
+  if (!prompt || !type) {
+    return res.status(400).json({ error: "Missing prompt or type" })
+  }
+
+  try {
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Generate a ${type} based on the following prompt: "${prompt}"`,
+      max_tokens: 2048,
+    })
+
+    const generatedHTML = response.data.choices[0].text.trim()
+
+    if (generatedHTML) {
+      return res.status(200).send(generatedHTML)
+    } else {
+      return res.status(200).send(createFallbackHTML(prompt, type))
     }
-    .app { width: 100%; max-width: 800px; }
-    @media (max-width: 768px) {
-      body { padding: 0.5rem; }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    ${template}
-  </div>
-  <script>
-    console.log('${type} created with MindForge AI - Fallback version');
-  </script>
-</body>
-</html>`
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: "Failed to generate content" })
+  }
 }
