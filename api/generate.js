@@ -34,6 +34,21 @@ export default async function handler(req, res) {
       })
     }
 
+    // 🔒 MODERATION STEP
+    const bannedWords = [
+      "sex", "porn", "nude", "nsfw", "drugs", "weapon", "violence", "kill", "murder",
+      "terrorist", "rape", "blood", "gore", "suicide", "abuse", "adult", "xxx", "hentai"
+    ];
+    const lowerPrompt = prompt.toLowerCase();
+    const foundBanned = bannedWords.find(word => lowerPrompt.includes(word));
+
+    if (foundBanned) {
+      return res.status(400).json({
+        success: false,
+        error: `Inappropriate content detected: "${foundBanned}" is not allowed.`,
+      });
+    }
+
     // Get API keys
     const mistralKey = process.env.MISTRAL_API_KEY
     const huggingFaceKey = process.env.HUGGING_FACE_API_KEY
