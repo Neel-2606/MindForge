@@ -74,43 +74,38 @@ export default async function handler(req, res) {
     let result = null
     let usedAPI = null
 
-    // Try OpenRouter first (free Claude access)
+    // 🥇 Priority 1: Claude Sonnet via OpenRouter
     if (openRouterKey && !result) {
       try {
-        console.log("Trying OpenRouter (Free Claude)...")
+        console.log("🥇 Trying Claude Sonnet (Priority 1)...")
         result = await callOpenRouterAPI(advancedPrompt, openRouterKey)
-        if (result) usedAPI = "openrouter-claude"
+        if (result) usedAPI = "claude-sonnet"
       } catch (error) {
-        console.log("OpenRouter failed:", error.message)
+        console.log("Claude Sonnet failed:", error.message)
       }
     }
 
-    // Try Groq as backup (free high-speed)
+    // 🥈 Priority 2: Groq Qwen as backup
     if (groqKey && !result) {
       try {
-        console.log("Trying Groq (Free)...")
+        console.log("🥈 Trying Groq Qwen (Priority 2)...")
         result = await callGroqAPI(advancedPrompt, groqKey)
-        if (result) usedAPI = "groq-llama"
+        if (result) usedAPI = "groq-qwen"
       } catch (error) {
-        console.log("Groq failed:", error.message)
+        console.log("Groq Qwen failed:", error.message)
       }
     }
 
     if (result && result.length > 500) {
-      // Parse and structure the result for modern frameworks
-      const projectStructure = parseFrameworkProject(result, type, prompt)
-
-      console.log(`✅ Success with ${usedAPI}: Generated ${Object.keys(projectStructure.files).length} files`)
+      console.log(`✅ Success with ${usedAPI}: Generated code`)
 
       return res.status(200).json({
         success: true,
-        projectStructure: projectStructure,
+        code: result,
         type: type,
         apiUsed: usedAPI,
         timestamp: new Date().toISOString(),
-        fileCount: Object.keys(projectStructure.files).length,
-        model: usedAPI,
-        framework: projectStructure.framework
+        model: usedAPI
       })
     }
 
@@ -1030,7 +1025,7 @@ async function callGroqAPI(prompt, apiKey) {
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "llama-3.1-70b-versatile",
+      model: "qwen2-72b-instruct",
       messages: [
         {
           role: "system",
