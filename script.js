@@ -327,9 +327,9 @@ document.addEventListener("DOMContentLoaded", function () {
     finally {
       generateBtn.disabled = false;
       generateBtn.textContent = "✨ Generate";
-    }    
-    };
-  
+    }
+  });
+
   // 📱 Mobile Detection
   function detectMobile() {
     return window.innerWidth <= 768;
@@ -403,4 +403,3 @@ document.addEventListener("DOMContentLoaded", function () {
     el.addEventListener("click", btn.onClick);
     toolbar.appendChild(el);
   });
-}); 
