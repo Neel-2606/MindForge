@@ -322,13 +322,11 @@ document.addEventListener("DOMContentLoaded", function () {
       cssCode.textContent = "/* Generation failed */";
       jsCode.textContent = "/* Generation failed */";
       
-      previewArea.style.display = "block";
-    } 
-    finally {
+    } finally {
       generateBtn.disabled = false;
       generateBtn.textContent = "✨ Generate";
     }
-  });
+  }
 
   // 📱 Mobile Detection
   function detectMobile() {
@@ -403,3 +401,4 @@ document.addEventListener("DOMContentLoaded", function () {
     el.addEventListener("click", btn.onClick);
     toolbar.appendChild(el);
   });
+});
