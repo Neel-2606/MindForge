@@ -194,6 +194,13 @@ document.addEventListener("DOMContentLoaded", function () {
         throw new Error(data.error);
       }
 
+      // Handle new project structure format
+      if (data.projectStructure) {
+        displayProjectStructure(data.projectStructure, data.framework);
+        return;
+      }
+
+      // Fallback to old format
       let output = data.code || data.fallback;
 
       if (!output || output.trim().length < 100) {
@@ -494,4 +501,176 @@ document.addEventListener("DOMContentLoaded", function () {
     el.addEventListener("click", btn.onClick);
     toolbar.appendChild(el);
   });
+
+  // 🚀 Display modern framework project structure
+  function displayProjectStructure(projectStructure, framework) {
+    const { files, setupInstructions, features } = projectStructure;
+    
+    // Update preview with project overview
+    previewFrame.srcdoc = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern ${framework.toUpperCase()} Project Generated</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #00fff0, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .framework-badge {
+      display: inline-block;
+      background: rgba(0,255,240,0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      border: 1px solid rgba(0,255,240,0.3);
+      margin-bottom: 1rem;
+    }
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    .file-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .file-name {
+      font-weight: bold;
+      color: #00fff0;
+      margin-bottom: 0.5rem;
+    }
+    .file-preview {
+      background: rgba(0,0,0,0.3);
+      padding: 0.5rem;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      max-height: 100px;
+      overflow: hidden;
+      white-space: pre-wrap;
+    }
+    .setup-section {
+      background: rgba(0,255,0,0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      border: 1px solid rgba(0,255,0,0.3);
+    }
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .feature-tag {
+      background: rgba(255,255,255,0.2);
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.9rem;
+    }
+    .download-btn {
+      background: linear-gradient(45deg, #00fff0, #ff00ff);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1rem;
+      margin: 1rem 0.5rem;
+      transition: transform 0.3s ease;
+    }
+    .download-btn:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Modern Project Generated!</h1>
+      <div class="framework-badge">${framework.toUpperCase()} Framework</div>
+      <p>Complete project structure with ${Object.keys(files).length} files</p>
+    </div>
+
+    <div class="files-grid">
+      ${Object.entries(files).slice(0, 6).map(([fileName, content]) => `
+        <div class="file-card">
+          <div class="file-name">${fileName}</div>
+          <div class="file-preview">${content.substring(0, 200)}...</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="setup-section">
+      <h3>🔧 Setup Instructions</h3>
+      <p>${setupInstructions}</p>
+      <div class="features-list">
+        ${features.map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <button class="download-btn" onclick="downloadProject()">📦 Download Project</button>
+      <button class="download-btn" onclick="viewAllFiles()">📁 View All Files</button>
+    </div>
+  </div>
+
+  <script>
+    function downloadProject() {
+      alert('Project download feature coming soon! For now, copy the files from the code view.');
+    }
+    
+    function viewAllFiles() {
+      parent.postMessage('showAllFiles', '*');
+    }
+  </script>
+</body>
+</html>`;
+
+    // Update code view with project files
+    const allFilesHtml = Object.entries(files).map(([fileName, content]) => `
+      <div style="margin-bottom: 2rem; border: 1px solid #333; border-radius: 8px; overflow: hidden;">
+        <div style="background: #2d3748; color: white; padding: 0.5rem 1rem; font-weight: bold;">
+          📄 ${fileName}
+        </div>
+        <pre style="background: #1a202c; color: #e2e8f0; padding: 1rem; margin: 0; overflow-x: auto;"><code>${content}</code></pre>
+      </div>
+    `).join('');
+
+    document.getElementById("code-html-view").innerHTML = allFilesHtml;
+    htmlCode.textContent = `// Modern ${framework.toUpperCase()} Project Structure\n// ${Object.keys(files).length} files generated\n\n${Object.entries(files).map(([name, content]) => `// ${name}\n${content}\n\n`).join('')}`;
+    
+    // Show success message
+    console.log(`✅ Generated modern ${framework} project with ${Object.keys(files).length} files`);
+  }
 });

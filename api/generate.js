@@ -97,51 +97,867 @@ export default async function handler(req, res) {
     }
 
     if (result && result.length > 500) {
-      // Clean and enhance the result
-      let cleanCode = cleanHTMLResult(result)
+      // Parse and structure the result for modern frameworks
+      const projectStructure = parseFrameworkProject(result, type, prompt)
 
-      // Ensure proper HTML structure
-      if (!cleanCode.toLowerCase().includes("<!doctype") && !cleanCode.toLowerCase().includes("<html")) {
-        cleanCode = wrapInAdvancedHTMLStructure(cleanCode, type)
-      }
-
-      console.log(`✅ Success with ${usedAPI}: ${cleanCode.length} characters`)
+      console.log(`✅ Success with ${usedAPI}: Generated ${Object.keys(projectStructure.files).length} files`)
 
       return res.status(200).json({
         success: true,
-        code: cleanCode,
+        projectStructure: projectStructure,
         type: type,
         apiUsed: usedAPI,
         timestamp: new Date().toISOString(),
-        characterCount: cleanCode.length,
-        model: usedAPI
+        fileCount: Object.keys(projectStructure.files).length,
+        model: usedAPI,
+        framework: projectStructure.framework
       })
     }
 
-    // All APIs failed - return advanced fallback
-    console.log("All free APIs failed, returning advanced fallback")
+    // All APIs failed - return modern framework fallback
+    console.log("All free APIs failed, returning modern framework fallback")
+    const fallbackProject = createModernFrameworkFallback(type, prompt)
     return res.status(200).json({
       success: true,
-      code: createAdvancedFallbackHTML(type, prompt),
+      projectStructure: fallbackProject,
       type: type,
       apiUsed: "fallback",
       timestamp: new Date().toISOString(),
+      framework: fallbackProject.framework
     })
 
   } catch (error) {
     console.error("Handler error:", error)
 
     const { prompt = "error", type = "Website" } = req.body || {}
+    const fallbackProject = createModernFrameworkFallback(type, prompt)
 
     return res.status(200).json({
       success: true,
-      code: createAdvancedFallbackHTML(type, prompt),
+      projectStructure: fallbackProject,
       type: type,
       apiUsed: "fallback",
       timestamp: new Date().toISOString(),
+      framework: fallbackProject.framework,
       error: error.message
     })
   }
+}
+
+// 🚀 Parse AI response into framework project structure
+function parseFrameworkProject(aiResponse, projectType, userPrompt) {
+  try {
+    // Try to parse JSON response first
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.files && parsed.framework) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.log("Failed to parse JSON, creating structured project from text");
+  }
+
+  // Fallback: Create structured project from AI text response
+  return createModernFrameworkFallback(projectType, userPrompt, aiResponse);
+}
+
+// 🚀 Create modern framework fallback projects
+function createModernFrameworkFallback(projectType, userPrompt, aiContent = null) {
+  const frameworks = {
+    Website: "nextjs",
+    "Mobile App": "react",
+    Game: "react",
+    "AI Bot": "nextjs",
+    API: "nextjs",
+    "AI Tool": "nextjs"
+  };
+
+  const framework = frameworks[projectType] || "react";
+  
+  const projects = {
+    nextjs: createNextJSProject(projectType, userPrompt, aiContent),
+    react: createReactProject(projectType, userPrompt, aiContent)
+  };
+
+  return projects[framework];
+}
+
+// 🚀 Create React project structure
+function createReactProject(projectType, userPrompt, aiContent) {
+  return {
+    framework: "react",
+    files: {
+      "package.json": JSON.stringify({
+        "name": `mindforge-${projectType.toLowerCase().replace(/\s+/g, '-')}`,
+        "version": "0.1.0",
+        "private": true,
+        "dependencies": {
+          "react": "^18.2.0",
+          "react-dom": "^18.2.0",
+          "react-scripts": "5.0.1",
+          "framer-motion": "^10.16.4",
+          "lucide-react": "^0.292.0",
+          "tailwindcss": "^3.3.0",
+          "autoprefixer": "^10.4.16",
+          "postcss": "^8.4.31"
+        },
+        "scripts": {
+          "start": "react-scripts start",
+          "build": "react-scripts build",
+          "test": "react-scripts test",
+          "eject": "react-scripts eject"
+        },
+        "eslintConfig": {
+          "extends": ["react-app", "react-app/jest"]
+        },
+        "browserslist": {
+          "production": [">0.2%", "not dead", "not op_mini all"],
+          "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+        }
+      }, null, 2),
+      
+      "public/index.html": `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="${projectType} generated by MindForge AI" />
+    <title>${projectType} - MindForge AI</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>`,
+
+      "src/index.js": `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`,
+
+      "src/App.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Footer from './components/Footer';
+import './App.css';
+
+function App() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Header />
+      <Hero title="${projectType}" description="${userPrompt}" />
+      <Features />
+      <Footer />
+    </div>
+  );
+}
+
+export default App;`,
+
+      "src/components/Header.js": `import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
+
+const Header = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <motion.header 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="fixed top-0 w-full bg-white/10 backdrop-blur-md z-50 border-b border-white/20"
+    >
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="text-2xl font-bold text-white"
+          >
+            MindForge
+          </motion.div>
+          
+          <nav className="hidden md:flex space-x-8">
+            {['Home', 'Features', 'About', 'Contact'].map((item) => (
+              <motion.a
+                key={item}
+                href={\`#\${item.toLowerCase()}\`}
+                whileHover={{ scale: 1.1 }}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                {item}
+              </motion.a>
+            ))}
+          </nav>
+
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-white"
+          >
+            {isOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+    </motion.header>
+  );
+};
+
+export default Header;`,
+
+      "src/components/Hero.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles } from 'lucide-react';
+
+const Hero = ({ title, description }) => {
+  return (
+    <section className="pt-32 pb-20 px-4">
+      <div className="container mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="flex justify-center mb-6">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-16 h-16 text-purple-400" />
+            </motion.div>
+          </div>
+          
+          <h1 className="text-6xl md:text-8xl font-bold text-white mb-6">
+            {title}
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
+            {description}
+          </p>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center gap-2 mx-auto"
+          >
+            Get Started
+            <ArrowRight className="w-5 h-5" />
+          </motion.button>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default Hero;`,
+
+      "src/components/Features.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { Zap, Shield, Rocket, Star } from 'lucide-react';
+
+const features = [
+  {
+    icon: Zap,
+    title: 'Lightning Fast',
+    description: 'Built with modern React for optimal performance'
+  },
+  {
+    icon: Shield,
+    title: 'Secure',
+    description: 'Enterprise-grade security built-in from the ground up'
+  },
+  {
+    icon: Rocket,
+    title: 'Scalable',
+    description: 'Designed to grow with your business needs'
+  },
+  {
+    icon: Star,
+    title: 'Modern',
+    description: 'Latest React patterns and best practices'
+  }
+];
+
+const Features = () => {
+  return (
+    <section className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Features
+          </h2>
+          <p className="text-white/80 text-xl">
+            Everything you need to build amazing applications
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+            >
+              <feature.icon className="w-12 h-12 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-white/80">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Features;`,
+
+      "src/components/Footer.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { Github, Twitter, Linkedin } from 'lucide-react';
+
+const Footer = () => {
+  return (
+    <footer className="py-12 px-4 border-t border-white/20">
+      <div className="container mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="text-white/80 mb-4 md:mb-0"
+          >
+            © 2024 MindForge AI. Built with modern React.
+          </motion.div>
+          
+          <div className="flex space-x-4">
+            {[Github, Twitter, Linkedin].map((Icon, index) => (
+              <motion.a
+                key={index}
+                href="#"
+                whileHover={{ scale: 1.2 }}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                <Icon className="w-6 h-6" />
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;`,
+
+      "src/index.css": `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}`,
+
+      "src/App.css": `.App {
+  text-align: center;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}`,
+
+      "tailwind.config.js": `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.5s ease-out',
+      },
+    },
+  },
+  plugins: [],
+}`,
+
+      "README.md": `# ${projectType} - MindForge AI
+
+A modern ${projectType.toLowerCase()} built with React, Tailwind CSS, and Framer Motion.
+
+## Features
+
+- ⚡ React 18 with modern hooks
+- 🎨 Tailwind CSS for styling
+- 🎭 Framer Motion animations
+- 📱 Fully responsive design
+- 🎯 Modern React patterns
+- 🔧 Create React App setup
+
+## Getting Started
+
+1. Install dependencies:
+\`\`\`bash
+npm install
+\`\`\`
+
+2. Run the development server:
+\`\`\`bash
+npm start
+\`\`\`
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+- \`src/\` - Source files
+- \`src/components/\` - Reusable React components
+- \`public/\` - Static assets
+
+## Build for Production
+
+\`\`\`bash
+npm run build
+\`\`\`
+
+Generated by MindForge AI 🚀`
+    },
+    setupInstructions: "1. Run 'npm install' 2. Run 'npm start' 3. Open http://localhost:3000",
+    features: ["React 18", "Tailwind CSS", "Framer Motion", "Responsive Design", "Modern Components", "Create React App"]
+  };
+}
+
+// 🚀 Create Next.js project structure
+function createNextJSProject(projectType, userPrompt, aiContent) {
+  return {
+    framework: "nextjs",
+    files: {
+      "package.json": JSON.stringify({
+        "name": `mindforge-${projectType.toLowerCase().replace(/\s+/g, '-')}`,
+        "version": "0.1.0",
+        "private": true,
+        "scripts": {
+          "dev": "next dev",
+          "build": "next build",
+          "start": "next start",
+          "lint": "next lint"
+        },
+        "dependencies": {
+          "next": "14.0.0",
+          "react": "^18.2.0",
+          "react-dom": "^18.2.0",
+          "tailwindcss": "^3.3.0",
+          "autoprefixer": "^10.4.16",
+          "postcss": "^8.4.31",
+          "framer-motion": "^10.16.4",
+          "lucide-react": "^0.292.0",
+          "@types/node": "^20.8.7",
+          "@types/react": "^18.2.31",
+          "@types/react-dom": "^18.2.14",
+          "typescript": "^5.2.2"
+        },
+        "devDependencies": {
+          "eslint": "^8.52.0",
+          "eslint-config-next": "14.0.0"
+        }
+      }, null, 2),
+      
+      "next.config.js": `/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+}
+
+module.exports = nextConfig`,
+
+      "tailwind.config.js": `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.5s ease-out',
+      },
+    },
+  },
+  plugins: [],
+}`,
+
+      "app/layout.tsx": `import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: '${projectType} - MindForge AI',
+  description: 'Generated by MindForge AI with modern frameworks',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  )
+}`,
+
+      "app/page.tsx": `'use client'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import Header from '@/components/Header'
+import Hero from '@/components/Hero'
+import Features from '@/components/Features'
+import Footer from '@/components/Footer'
+
+export default function Home() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Header />
+      <Hero title="${projectType}" description="${userPrompt}" />
+      <Features />
+      <Footer />
+    </main>
+  )
+}`,
+
+      "components/Header.tsx": `'use client'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
+
+export default function Header() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <motion.header 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="fixed top-0 w-full bg-white/10 backdrop-blur-md z-50 border-b border-white/20"
+    >
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="text-2xl font-bold text-white"
+          >
+            MindForge
+          </motion.div>
+          
+          <nav className="hidden md:flex space-x-8">
+            {['Home', 'Features', 'About', 'Contact'].map((item) => (
+              <motion.a
+                key={item}
+                href={\`#\${item.toLowerCase()}\`}
+                whileHover={{ scale: 1.1 }}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                {item}
+              </motion.a>
+            ))}
+          </nav>
+
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-white"
+          >
+            {isOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+    </motion.header>
+  )
+}`,
+
+      "components/Hero.tsx": `'use client'
+import { motion } from 'framer-motion'
+import { ArrowRight, Sparkles } from 'lucide-react'
+
+interface HeroProps {
+  title: string
+  description: string
+}
+
+export default function Hero({ title, description }: HeroProps) {
+  return (
+    <section className="pt-32 pb-20 px-4">
+      <div className="container mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="flex justify-center mb-6">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-16 h-16 text-purple-400" />
+            </motion.div>
+          </div>
+          
+          <h1 className="text-6xl md:text-8xl font-bold text-white mb-6">
+            {title}
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
+            {description}
+          </p>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center gap-2 mx-auto"
+          >
+            Get Started
+            <ArrowRight className="w-5 h-5" />
+          </motion.button>
+        </motion.div>
+      </div>
+    </section>
+  )
+}`,
+
+      "components/Features.tsx": `'use client'
+import { motion } from 'framer-motion'
+import { Zap, Shield, Rocket, Star } from 'lucide-react'
+
+const features = [
+  {
+    icon: Zap,
+    title: 'Lightning Fast',
+    description: 'Built with modern frameworks for optimal performance'
+  },
+  {
+    icon: Shield,
+    title: 'Secure',
+    description: 'Enterprise-grade security built-in from the ground up'
+  },
+  {
+    icon: Rocket,
+    title: 'Scalable',
+    description: 'Designed to grow with your business needs'
+  },
+  {
+    icon: Star,
+    title: 'Modern',
+    description: 'Latest technologies and best practices'
+  }
+]
+
+export default function Features() {
+  return (
+    <section className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Features
+          </h2>
+          <p className="text-white/80 text-xl">
+            Everything you need to build amazing applications
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+            >
+              <feature.icon className="w-12 h-12 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-white/80">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}`,
+
+      "components/Footer.tsx": `'use client'
+import { motion } from 'framer-motion'
+import { Github, Twitter, Linkedin } from 'lucide-react'
+
+export default function Footer() {
+  return (
+    <footer className="py-12 px-4 border-t border-white/20">
+      <div className="container mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="text-white/80 mb-4 md:mb-0"
+          >
+            © 2024 MindForge AI. Built with modern frameworks.
+          </motion.div>
+          
+          <div className="flex space-x-4">
+            {[Github, Twitter, Linkedin].map((Icon, index) => (
+              <motion.a
+                key={index}
+                href="#"
+                whileHover={{ scale: 1.2 }}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                <Icon className="w-6 h-6" />
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}`,
+
+      "app/globals.css": `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  overflow-x: hidden;
+}`,
+
+      "README.md": `# ${projectType} - MindForge AI
+
+A modern ${projectType.toLowerCase()} built with Next.js, React, TypeScript, and Tailwind CSS.
+
+## Features
+
+- ⚡ Next.js 14 with App Router
+- 🎨 Tailwind CSS for styling
+- 🎭 Framer Motion animations
+- 📱 Fully responsive design
+- 🔒 TypeScript for type safety
+- 🎯 Modern React patterns
+
+## Getting Started
+
+1. Install dependencies:
+\`\`\`bash
+npm install
+\`\`\`
+
+2. Run the development server:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+- \`app/\` - Next.js app directory
+- \`components/\` - Reusable React components
+- \`public/\` - Static assets
+
+## Deployment
+
+Deploy easily on Vercel:
+
+\`\`\`bash
+npm run build
+\`\`\`
+
+Generated by MindForge AI 🚀`
+    },
+    setupInstructions: "1. Run 'npm install' 2. Run 'npm run dev' 3. Open http://localhost:3000",
+    features: ["Next.js 14", "TypeScript", "Tailwind CSS", "Framer Motion", "Responsive Design", "Modern Components"]
+  };
 }
 
 // 🆓 FREE OpenRouter API call (Free Claude access)
@@ -239,96 +1055,122 @@ async function callGroqAPI(prompt, apiKey) {
   return data?.choices?.[0]?.message?.content
 }
 
-// 🚀 Create ADVANCED prompts for Claude Sonnet
+// 🚀 Create MODERN FRAMEWORK prompts
 function createAdvancedPrompt(userPrompt, projectType) {
-  const typeInstructions = {
-    Website: `Create a modern, professional website with:
-- Hero section with compelling visuals
-- Navigation with smooth scrolling
-- Feature sections with cards/grids
-- Contact/CTA sections
-- Footer with social links
-- Animations and hover effects
-- Mobile-first responsive design`,
+  const frameworkInstructions = {
+    Website: `Create a modern React/Next.js website project with:
+- Multiple component files (Header, Hero, Features, Footer)
+- Tailwind CSS for styling
+- React hooks for state management
+- Responsive design with mobile-first approach
+- Modern animations with Framer Motion
+- TypeScript for type safety
+- API routes for backend functionality`,
     
-    "Mobile App": `Create a mobile app interface with:
+    "Mobile App": `Create a React Native or Next.js PWA project with:
+- Component-based architecture
+- Navigation system (React Navigation)
+- State management (Redux/Zustand)
 - Native-like UI components
-- Touch-friendly interactions
-- Bottom navigation or tab bar
-- Card-based layouts
-- Swipe gestures support
-- Loading states and transitions
-- iOS/Android design patterns`,
+- Touch gestures and animations
+- Offline capabilities
+- Push notification setup`,
     
-    Game: `Create an interactive browser game with:
-- Game canvas or grid system
-- Score tracking and levels
-- Keyboard/touch controls
-- Game state management
-- Sound effects (optional)
-- Pause/restart functionality
-- Responsive game area`,
+    Game: `Create a React/Vue game project with:
+- Game engine integration (Phaser.js/Three.js)
+- Component-based game objects
+- State management for game logic
+- Canvas rendering with React/Vue
+- Sound system integration
+- Leaderboard with API
+- Responsive game controls`,
     
-    "AI Bot": `Create an AI chat interface with:
-- Message bubbles with timestamps
-- Typing indicators
-- Auto-scroll to latest message
-- Input validation
-- Message history
-- Dark/light theme toggle
-- Responsive chat layout`,
+    "AI Bot": `Create a modern chat application with:
+- React/Vue frontend with real-time updates
+- WebSocket integration
+- Message components with TypeScript
+- State management for chat history
+- AI API integration
+- Dark/light theme system
+- Progressive Web App features`,
     
-    API: `Create an API documentation site with:
-- Interactive endpoint explorer
-- Code examples in multiple languages
-- Authentication guides
-- Response schemas
-- Try-it-now functionality
-- Search and filtering
-- Professional developer experience`,
+    API: `Create a full-stack API project with:
+- Next.js API routes or Express.js backend
+- Frontend documentation site (React/Vue)
+- OpenAPI/Swagger integration
+- Authentication middleware
+- Database integration (Prisma/MongoDB)
+- Rate limiting and security
+- Interactive API testing interface`,
     
-    "AI Tool": `Create an AI-powered tool with:
-- Clean input/output interface
-- Real-time processing indicators
-- Result visualization
-- Export/download options
-- Settings and preferences
-- Usage analytics display
-- Professional dashboard layout`
+    "AI Tool": `Create a modern AI tool with:
+- React/Vue dashboard interface
+- Real-time data visualization (Chart.js/D3)
+- File upload and processing
+- WebSocket for real-time updates
+- State management for complex data
+- Export functionality (PDF/CSV)
+- Responsive design with modern UI library`
   }
 
-  return `Create a complete, production-ready HTML file for a ${projectType}.
+  return `Create a complete, modern framework project for a ${projectType}.
 
 🎯 PROJECT REQUIREMENTS:
-${typeInstructions[projectType]}
+${frameworkInstructions[projectType]}
 
 📝 USER REQUEST: "${userPrompt}"
 
-🎨 DESIGN STANDARDS:
-- Modern, clean, and professional appearance
-- Consistent color scheme and typography
-- Smooth animations and micro-interactions
-- Intuitive user experience
-- Mobile-first responsive design
-- Accessibility compliant (WCAG 2.1)
+🏗️ PROJECT STRUCTURE:
+Generate a complete project with multiple files including:
+- package.json with all necessary dependencies
+- Main application files (App.js/tsx, index.js/tsx)
+- Component files (separate .jsx/.tsx files)
+- Styling files (CSS modules, Tailwind, or styled-components)
+- Configuration files (next.config.js, vite.config.js, etc.)
+- README.md with setup instructions
+
+🎨 MODERN STANDARDS:
+- Use latest React 18+ features (hooks, concurrent features)
+- TypeScript for type safety
+- Modern CSS (Tailwind CSS, CSS-in-JS, or CSS modules)
+- Component composition patterns
+- Custom hooks for logic reuse
+- Error boundaries and loading states
+- Accessibility (ARIA labels, semantic HTML)
 
 💻 TECHNICAL REQUIREMENTS:
-- Single HTML file with embedded CSS and JavaScript
-- Modern CSS3 (Flexbox, Grid, Custom Properties)
-- Vanilla JavaScript (ES6+)
-- Cross-browser compatible
-- Performance optimized
-- SEO-friendly structure
+- Modern build tools (Vite, Next.js, or Create React App)
+- ESLint and Prettier configuration
+- Environment variable setup
+- API integration patterns
+- State management (Context API, Zustand, or Redux Toolkit)
+- Routing (React Router or Next.js routing)
+- Performance optimizations (lazy loading, memoization)
 
-🚀 ADVANCED FEATURES TO INCLUDE:
-- Interactive components
-- Form validation (if applicable)
-- Local storage for user preferences
-- Loading states and error handling
-- Keyboard navigation support
-- Touch/gesture support for mobile
+🚀 ADVANCED FEATURES:
+- Server-side rendering (if Next.js)
+- Progressive Web App capabilities
+- Real-time features (WebSockets)
+- Database integration patterns
+- Authentication system
+- Testing setup (Jest, React Testing Library)
+- Deployment configuration (Vercel, Netlify)
 
-Return ONLY the complete HTML code. Make it look like a professional, modern application that users would actually want to use.`
+Return the response in this JSON format:
+{
+  "framework": "react|nextjs|vue|nuxt",
+  "files": {
+    "package.json": "...",
+    "src/App.jsx": "...",
+    "src/components/Header.jsx": "...",
+    "README.md": "...",
+    // ... more files
+  },
+  "setupInstructions": "Step by step setup guide",
+  "features": ["list", "of", "implemented", "features"]
+}
+
+Make it production-ready with modern best practices, not a basic tutorial project.`
 }
 
 // Clean HTML result
