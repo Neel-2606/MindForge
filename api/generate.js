@@ -96,9 +96,27 @@ export default async function handler(req, res) {
       }
     }
 
-    if (result && result.length > 500) {
+    if (result && result.length > 100) {
       console.log(`✅ Success with ${usedAPI}: Generated code`)
 
+      // Try to parse as project structure first
+      try {
+        const projectStructure = parseFrameworkProject(result, type, prompt)
+        if (projectStructure && projectStructure.files && Object.keys(projectStructure.files).length > 0) {
+          return res.status(200).json({
+            success: true,
+            projectStructure: projectStructure,
+            type: type,
+            apiUsed: usedAPI,
+            timestamp: new Date().toISOString(),
+            framework: projectStructure.framework
+          })
+        }
+      } catch (parseError) {
+        console.log("Failed to parse as project structure, treating as HTML code")
+      }
+
+      // Fallback to treating as HTML code
       return res.status(200).json({
         success: true,
         code: result,
@@ -109,16 +127,22 @@ export default async function handler(req, res) {
       })
     }
 
-    // All APIs failed - return modern framework fallback
-    console.log("All free APIs failed, returning modern framework fallback")
+    // All APIs failed or result too short - return modern framework fallback
+    console.log("All free APIs failed or result too short, returning modern framework fallback")
     const fallbackProject = createModernFrameworkFallback(type, prompt)
+    
+    // Ensure fallback project has sufficient content
+    const totalContent = Object.values(fallbackProject.files).join('').length;
+    console.log(`Fallback project content length: ${totalContent} characters`);
+    
     return res.status(200).json({
       success: true,
       projectStructure: fallbackProject,
       type: type,
       apiUsed: "fallback",
       timestamp: new Date().toISOString(),
-      framework: fallbackProject.framework
+      framework: fallbackProject.framework,
+      contentLength: totalContent
     })
 
   } catch (error) {
@@ -181,6 +205,9 @@ function createModernFrameworkFallback(projectType, userPrompt, aiContent = null
 
 // 🚀 Create React project structure
 function createReactProject(projectType, userPrompt, aiContent) {
+  // Enhanced portfolio-specific content for React projects
+  const isPortfolio = userPrompt.toLowerCase().includes('portfolio') || projectType.toLowerCase().includes('portfolio');
+  
   return {
     framework: "react",
     files: {
@@ -196,7 +223,8 @@ function createReactProject(projectType, userPrompt, aiContent) {
           "lucide-react": "^0.292.0",
           "tailwindcss": "^3.3.0",
           "autoprefixer": "^10.4.16",
-          "postcss": "^8.4.31"
+          "postcss": "^8.4.31",
+          "react-router-dom": "^6.8.0"
         },
         "scripts": {
           "start": "react-scripts start",
@@ -245,7 +273,10 @@ root.render(
 import { motion } from 'framer-motion';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import Features from './components/Features';
+import About from './components/About';
+import Projects from './components/Projects';
+import Skills from './components/Skills';
+import Contact from './components/Contact';
 import Footer from './components/Footer';
 import './App.css';
 
@@ -253,8 +284,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Header />
-      <Hero title="${projectType}" description="${userPrompt}" />
-      <Features />
+      <Hero title="${isPortfolio ? 'Portfolio' : projectType}" description="${userPrompt}" />
+      ${isPortfolio ? '<About /><Projects /><Skills /><Contact />' : '<Features />'}
       <Footer />
     </div>
   );
@@ -268,6 +299,7 @@ import { Menu, X } from 'lucide-react';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navItems = ${isPortfolio ? "['Home', 'About', 'Projects', 'Skills', 'Contact']" : "['Home', 'Features', 'About', 'Contact']"};
 
   return (
     <motion.header 
@@ -281,11 +313,11 @@ const Header = () => {
             whileHover={{ scale: 1.05 }}
             className="text-2xl font-bold text-white"
           >
-            MindForge
+            ${isPortfolio ? 'Portfolio' : 'MindForge'}
           </motion.div>
           
           <nav className="hidden md:flex space-x-8">
-            {['Home', 'Features', 'About', 'Contact'].map((item) => (
+            {navItems.map((item) => (
               <motion.a
                 key={item}
                 href={\`#\${item.toLowerCase()}\`}
@@ -304,6 +336,26 @@ const Header = () => {
             {isOpen ? <X /> : <Menu />}
           </button>
         </div>
+
+        {/* Mobile menu */}
+        {isOpen && (
+          <motion.nav
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden mt-4 pb-4"
+          >
+            {navItems.map((item) => (
+              <a
+                key={item}
+                href={\`#\${item.toLowerCase()}\`}
+                className="block py-2 text-white/80 hover:text-white transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                {item}
+              </a>
+            ))}
+          </motion.nav>
+        )}
       </div>
     </motion.header>
   );
@@ -426,6 +478,388 @@ const Features = () => {
 };
 
 export default Features;`,
+
+      "src/components/About.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { User, Code, Coffee } from 'lucide-react';
+
+const About = () => {
+  return (
+    <section id="about" className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            About Me
+          </h2>
+          <p className="text-white/80 text-xl max-w-3xl mx-auto">
+            Passionate developer creating amazing digital experiences
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <User className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Who I Am</h3>
+              <p className="text-white/80">
+                A creative developer with a passion for building innovative solutions
+                that make a difference in people's lives.
+              </p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <Code className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">What I Do</h3>
+              <p className="text-white/80">
+                I specialize in full-stack development, creating modern web applications
+                with cutting-edge technologies and best practices.
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20"
+          >
+            <Coffee className="w-12 h-12 text-purple-400 mb-6" />
+            <h3 className="text-2xl font-semibold text-white mb-4">My Journey</h3>
+            <p className="text-white/80 leading-relaxed">
+              With years of experience in software development, I've worked on
+              diverse projects ranging from small business websites to large-scale
+              enterprise applications. I believe in writing clean, maintainable
+              code and creating user experiences that delight and inspire.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default About;`,
+
+      "src/components/Projects.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { ExternalLink, Github, Star } from 'lucide-react';
+
+const projects = [
+  {
+    title: 'E-Commerce Platform',
+    description: 'Full-stack e-commerce solution with React, Node.js, and MongoDB',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=500&h=300&fit=crop',
+    tech: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+    github: '#',
+    demo: '#'
+  },
+  {
+    title: 'Task Management App',
+    description: 'Collaborative task management with real-time updates',
+    image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=500&h=300&fit=crop',
+    tech: ['React', 'Firebase', 'Material-UI', 'WebSocket'],
+    github: '#',
+    demo: '#'
+  },
+  {
+    title: 'AI Chat Assistant',
+    description: 'Intelligent chatbot with natural language processing',
+    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500&h=300&fit=crop',
+    tech: ['Next.js', 'OpenAI', 'Tailwind', 'Vercel'],
+    github: '#',
+    demo: '#'
+  }
+];
+
+const Projects = () => {
+  return (
+    <section id="projects" className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Projects
+          </h2>
+          <p className="text-white/80 text-xl">
+            Some of my recent work and side projects
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {projects.map((project, index) => (
+            <motion.div
+              key={project.title}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-300"
+            >
+              <div className="h-48 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Star className="w-16 h-16 text-white/80" />
+              </div>
+              
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {project.title}
+                </h3>
+                <p className="text-white/80 mb-4">
+                  {project.description}
+                </p>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {project.tech.map((tech) => (
+                    <span
+                      key={tech}
+                      className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex gap-4">
+                  <motion.a
+                    href={project.github}
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                  >
+                    <Github className="w-4 h-4" />
+                    Code
+                  </motion.a>
+                  <motion.a
+                    href={project.demo}
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Demo
+                  </motion.a>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Projects;`,
+
+      "src/components/Skills.js": `import React from 'react';
+import { motion } from 'framer-motion';
+import { Code2, Database, Globe, Smartphone } from 'lucide-react';
+
+const skillCategories = [
+  {
+    icon: Code2,
+    title: 'Frontend',
+    skills: ['React', 'Vue.js', 'TypeScript', 'Tailwind CSS', 'Next.js']
+  },
+  {
+    icon: Database,
+    title: 'Backend',
+    skills: ['Node.js', 'Python', 'PostgreSQL', 'MongoDB', 'Express']
+  },
+  {
+    icon: Globe,
+    title: 'Web Technologies',
+    skills: ['HTML5', 'CSS3', 'JavaScript', 'REST APIs', 'GraphQL']
+  },
+  {
+    icon: Smartphone,
+    title: 'Mobile & Tools',
+    skills: ['React Native', 'Git', 'Docker', 'AWS', 'Figma']
+  }
+];
+
+const Skills = () => {
+  return (
+    <section id="skills" className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Skills
+          </h2>
+          <p className="text-white/80 text-xl">
+            Technologies and tools I work with
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {skillCategories.map((category, index) => (
+            <motion.div
+              key={category.title}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+            >
+              <category.icon className="w-12 h-12 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-4">
+                {category.title}
+              </h3>
+              <div className="space-y-2">
+                {category.skills.map((skill) => (
+                  <div
+                    key={skill}
+                    className="px-3 py-2 bg-white/5 rounded-lg text-white/80 text-sm"
+                  >
+                    {skill}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Skills;`,
+
+      "src/components/Contact.js": `import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
+
+const Contact = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert('Thank you for your message! I will get back to you soon.');
+    setFormData({ name: '', email: '', message: '' });
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  return (
+    <section id="contact" className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Contact
+          </h2>
+          <p className="text-white/80 text-xl">
+            Let's work together on your next project
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-12">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <Mail className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Email</h3>
+              <p className="text-white/80">hello@portfolio.com</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <Phone className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Phone</h3>
+              <p className="text-white/80">+1 (555) 123-4567</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <MapPin className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Location</h3>
+              <p className="text-white/80">San Francisco, CA</p>
+            </div>
+          </motion.div>
+
+          <motion.form
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            onSubmit={handleSubmit}
+            className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20 space-y-6"
+          >
+            <div>
+              <label className="block text-white mb-2">Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-400"
+                placeholder="Your name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white mb-2">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-400"
+                placeholder="your@email.com"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white mb-2">Message</label>
+              <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                required
+                rows="5"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-400 resize-none"
+                placeholder="Your message..."
+              ></textarea>
+            </div>
+            
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-lg font-semibold flex items-center justify-center gap-2"
+            >
+              Send Message
+              <Send className="w-5 h-5" />
+            </motion.button>
+          </motion.form>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Contact;`,
 
       "src/components/Footer.js": `import React from 'react';
 import { motion } from 'framer-motion';
