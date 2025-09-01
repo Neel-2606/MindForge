@@ -1,7 +1,7 @@
 {
   "name": "mindforge",
-  "version": "1.0.0",
-  "description": "AI-powered web development tool that generates complete web applications from text prompts using Google's Gemini API",
+  "version": "2.0.0",
+  "description": "AI-powered web development tool that generates modern, professional web applications from text prompts using Claude Sonnet API",
   "main": "index.html",
   "scripts": {
     "dev": "npx serve .",
@@ -13,11 +13,13 @@
     "ai",
     "web-development",
     "code-generation",
-    "gemini",
+    "claude-sonnet",
+    "anthropic",
     "vercel",
     "html",
     "css",
-    "javascript"
+    "javascript",
+    "modern-ui"
   ],
   "author": "Neel Prajapati",
   "license": "MIT",

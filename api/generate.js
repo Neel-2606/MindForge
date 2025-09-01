@@ -10,12 +10,13 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     return res.status(200).json({
-      message: "MindForge API is working!",
+      message: "MindForge AI is working with FREE APIs!",
       timestamp: new Date().toISOString(),
       environment: {
-        hasMistral: !!process.env.MISTRAL_API_KEY,
-        hasHuggingFace: !!process.env.HUGGING_FACE_API_KEY,
-        hasGemini: !!process.env.GEMINI_API_KEY,
+        hasOpenRouter: !!process.env.OPENROUTER_API_KEY,
+        hasGroq: !!process.env.GROQ_API_KEY,
+        version: "2.0.0",
+        models: ["claude-3.5-sonnet (free)", "llama-3.1-70b (free)"]
       },
     })
   }
@@ -34,10 +35,11 @@ export default async function handler(req, res) {
       })
     }
 
-    // 🔒 MODERATION STEP
+    // 🔒 ENHANCED MODERATION
     const bannedWords = [
       "sex", "porn", "nude", "nsfw", "drugs", "weapon", "violence", "kill", "murder",
-      "terrorist", "rape", "blood", "gore", "suicide", "abuse", "adult", "xxx", "hentai"
+      "terrorist", "rape", "blood", "gore", "suicide", "abuse", "adult", "xxx", "hentai",
+      "hack", "exploit", "malware", "virus"
     ];
     const lowerPrompt = prompt.toLowerCase();
     const foundBanned = bannedWords.find(word => lowerPrompt.includes(word));
@@ -49,73 +51,61 @@ export default async function handler(req, res) {
       });
     }
 
-    // Get API keys
-    const mistralKey = process.env.MISTRAL_API_KEY
-    const huggingFaceKey = process.env.HUGGING_FACE_API_KEY
-    const geminiKey = process.env.GEMINI_API_KEY
+    // Get API keys - prioritize free options
+    const openRouterKey = process.env.OPENROUTER_API_KEY
+    const groqKey = process.env.GROQ_API_KEY
 
-    if (!mistralKey && !huggingFaceKey && !geminiKey) {
+    if (!openRouterKey && !groqKey) {
       return res.status(200).json({
         success: true,
-        code: createModerateFallbackHTML(type, prompt),
+        code: createAdvancedFallbackHTML(type, prompt),
         type: type,
         apiUsed: "fallback",
         timestamp: new Date().toISOString(),
+        message: "No free API keys configured. Using advanced fallback."
       })
     }
 
-    // Create MODERATE prompt - not too basic, not too complex
-    const moderatePrompt = createModeratePrompt(prompt, type)
+    // Create advanced prompt
+    const advancedPrompt = createAdvancedPrompt(prompt, type)
 
-    console.log(`Generating ${type} with moderate prompt length: ${moderatePrompt.length}`)
+    console.log(`Generating ${type} with free AI APIs...`)
 
-    // Try APIs: Mistral -> Hugging Face -> Gemini
     let result = null
     let usedAPI = null
 
-    // Try Mistral first
-    if (mistralKey && !result) {
+    // Try OpenRouter first (free Claude access)
+    if (openRouterKey && !result) {
       try {
-        console.log("Trying Mistral...")
-        result = await callMistralAPI(moderatePrompt, mistralKey)
-        if (result) usedAPI = "mistral"
+        console.log("Trying OpenRouter (Free Claude)...")
+        result = await callOpenRouterAPI(advancedPrompt, openRouterKey)
+        if (result) usedAPI = "openrouter-claude"
       } catch (error) {
-        console.log("Mistral failed:", error.message)
+        console.log("OpenRouter failed:", error.message)
       }
     }
 
-    // Try Hugging Face second
-    if (huggingFaceKey && !result) {
+    // Try Groq as backup (free high-speed)
+    if (groqKey && !result) {
       try {
-        console.log("Trying Hugging Face...")
-        result = await callHuggingFaceAPI(moderatePrompt, huggingFaceKey)
-        if (result) usedAPI = "huggingface"
+        console.log("Trying Groq (Free)...")
+        result = await callGroqAPI(advancedPrompt, groqKey)
+        if (result) usedAPI = "groq-llama"
       } catch (error) {
-        console.log("Hugging Face failed:", error.message)
+        console.log("Groq failed:", error.message)
       }
     }
 
-    // Try Gemini last
-    if (geminiKey && !result) {
-      try {
-        console.log("Trying Gemini...")
-        result = await callGeminiAPI(moderatePrompt, geminiKey)
-        if (result) usedAPI = "gemini"
-      } catch (error) {
-        console.log("Gemini failed:", error.message)
-      }
-    }
-
-    if (result && result.length > 300) {
-      // Clean the result
+    if (result && result.length > 500) {
+      // Clean and enhance the result
       let cleanCode = cleanHTMLResult(result)
 
-      // Add basic HTML structure if needed
+      // Ensure proper HTML structure
       if (!cleanCode.toLowerCase().includes("<!doctype") && !cleanCode.toLowerCase().includes("<html")) {
-        cleanCode = wrapInModerateHTMLStructure(cleanCode, type)
+        cleanCode = wrapInAdvancedHTMLStructure(cleanCode, type)
       }
 
-      console.log(`Success with ${usedAPI}: ${cleanCode.length} characters`)
+      console.log(`✅ Success with ${usedAPI}: ${cleanCode.length} characters`)
 
       return res.status(200).json({
         success: true,
@@ -124,18 +114,20 @@ export default async function handler(req, res) {
         apiUsed: usedAPI,
         timestamp: new Date().toISOString(),
         characterCount: cleanCode.length,
+        model: usedAPI
       })
     }
 
-    // All APIs failed - return moderate fallback
-    console.log("All APIs failed, returning moderate fallback")
+    // All APIs failed - return advanced fallback
+    console.log("All free APIs failed, returning advanced fallback")
     return res.status(200).json({
       success: true,
-      code: createModerateFallbackHTML(type, prompt),
+      code: createAdvancedFallbackHTML(type, prompt),
       type: type,
       apiUsed: "fallback",
       timestamp: new Date().toISOString(),
     })
+
   } catch (error) {
     console.error("Handler error:", error)
 
@@ -143,128 +135,200 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      code: createModerateFallbackHTML(type, prompt),
+      code: createAdvancedFallbackHTML(type, prompt),
       type: type,
       apiUsed: "fallback",
       timestamp: new Date().toISOString(),
+      error: error.message
     })
   }
 }
 
-// MODERATE Mistral API call
-async function callMistralAPI(prompt, apiKey) {
-  const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+// 🆓 FREE OpenRouter API call (Free Claude access)
+async function callOpenRouterAPI(prompt, apiKey) {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://mindforge.vercel.app",
+      "X-Title": "MindForge AI"
     },
     body: JSON.stringify({
-      model: "mistral-large-latest",
+      model: "anthropic/claude-3.5-sonnet:beta",
       messages: [
         {
           role: "system",
-          content:
-            "You are a web developer. Create clean HTML with internal CSS and JavaScript. Make it look good but not overly complex.",
+          content: `You are an expert full-stack developer and UI/UX designer. Create modern, professional, and fully functional web applications with:
+
+🎨 DESIGN EXCELLENCE:
+- Modern, clean, and visually appealing interfaces
+- Responsive design that works perfectly on all devices
+- Professional color schemes and typography
+- Smooth animations and transitions
+- Intuitive user experience
+
+💻 TECHNICAL EXCELLENCE:
+- Clean, semantic HTML5 structure
+- Modern CSS3 with Flexbox/Grid layouts
+- Vanilla JavaScript with ES6+ features
+- Cross-browser compatibility
+- Performance optimized code
+- Accessibility best practices
+
+🚀 ADVANCED FEATURES:
+- Interactive components and functionality
+- Local storage for data persistence
+- Form validation and user feedback
+- Loading states and error handling
+- Progressive enhancement
+- Mobile-first responsive design
+
+Always return complete, production-ready HTML files with embedded CSS and JavaScript. Make it look professional and modern, not basic or template-like.`
         },
         {
           role: "user",
-          content: prompt,
-        },
+          content: prompt
+        }
       ],
-      temperature: 0.3,
-      max_tokens: 8192, // Moderate token limit
+      temperature: 0.1,
+      max_tokens: 8192
     }),
   })
 
   if (!response.ok) {
-    throw new Error(`Mistral API error: ${response.status}`)
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || response.statusText}`)
   }
 
   const data = await response.json()
   return data?.choices?.[0]?.message?.content
 }
 
-// MODERATE Hugging Face API call
-async function callHuggingFaceAPI(prompt, apiKey) {
-  const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1", {
+// 🆓 FREE Groq API call (High-speed inference)
+async function callGroqAPI(prompt, apiKey) {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 4096, // Moderate token limit
-        temperature: 0.3,
-        top_p: 0.9,
-      },
+      model: "llama-3.1-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert full-stack developer and UI/UX designer. Create modern, professional, and fully functional web applications with advanced features, responsive design, and clean code. Always return complete HTML files with embedded CSS and JavaScript.`
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 8192
     }),
   })
 
   if (!response.ok) {
-    throw new Error(`Hugging Face API error: ${response.status}`)
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(`Groq API error: ${response.status} - ${errorData.error?.message || response.statusText}`)
   }
 
   const data = await response.json()
-  return Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
+  return data?.choices?.[0]?.message?.content
 }
 
-// MODERATE Gemini API call
-async function callGeminiAPI(prompt, apiKey) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 8192, // Moderate token limit
-        },
-      }),
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text
-}
-
-// Create MODERATE prompts - not too simple, not too complex
-function createModeratePrompt(userPrompt, projectType) {
+// 🚀 Create ADVANCED prompts for Claude Sonnet
+function createAdvancedPrompt(userPrompt, projectType) {
   const typeInstructions = {
-    Website: "Create a website with header, main content, and footer. Add some CSS styling and basic interactivity.",
-    "Mobile App": "Create a mobile app interface with navigation and content sections. Make it touch-friendly.",
-    Game: "Create a simple browser game with score display, controls, and basic game mechanics.",
-    "AI Bot": "Create a chat interface with message bubbles and input field. Add some interactive features.",
-    API: "Create an API documentation page with endpoints list and examples.",
-    "AI Tool": "Create a tool interface with input controls and results display area.",
+    Website: `Create a modern, professional website with:
+- Hero section with compelling visuals
+- Navigation with smooth scrolling
+- Feature sections with cards/grids
+- Contact/CTA sections
+- Footer with social links
+- Animations and hover effects
+- Mobile-first responsive design`,
+    
+    "Mobile App": `Create a mobile app interface with:
+- Native-like UI components
+- Touch-friendly interactions
+- Bottom navigation or tab bar
+- Card-based layouts
+- Swipe gestures support
+- Loading states and transitions
+- iOS/Android design patterns`,
+    
+    Game: `Create an interactive browser game with:
+- Game canvas or grid system
+- Score tracking and levels
+- Keyboard/touch controls
+- Game state management
+- Sound effects (optional)
+- Pause/restart functionality
+- Responsive game area`,
+    
+    "AI Bot": `Create an AI chat interface with:
+- Message bubbles with timestamps
+- Typing indicators
+- Auto-scroll to latest message
+- Input validation
+- Message history
+- Dark/light theme toggle
+- Responsive chat layout`,
+    
+    API: `Create an API documentation site with:
+- Interactive endpoint explorer
+- Code examples in multiple languages
+- Authentication guides
+- Response schemas
+- Try-it-now functionality
+- Search and filtering
+- Professional developer experience`,
+    
+    "AI Tool": `Create an AI-powered tool with:
+- Clean input/output interface
+- Real-time processing indicators
+- Result visualization
+- Export/download options
+- Settings and preferences
+- Usage analytics display
+- Professional dashboard layout`
   }
 
-  return `Create a complete HTML file for a ${projectType}.
+  return `Create a complete, production-ready HTML file for a ${projectType}.
 
-Requirements:
-- Single HTML file with internal CSS and JavaScript
-- Responsive design that works on mobile and desktop
-- Clean, modern styling with some colors and spacing
-- ${typeInstructions[projectType]}
+🎯 PROJECT REQUIREMENTS:
+${typeInstructions[projectType]}
 
-User request: ${userPrompt}
+📝 USER REQUEST: "${userPrompt}"
 
-Make it look professional but not overly complex. Return only the HTML code.`
+🎨 DESIGN STANDARDS:
+- Modern, clean, and professional appearance
+- Consistent color scheme and typography
+- Smooth animations and micro-interactions
+- Intuitive user experience
+- Mobile-first responsive design
+- Accessibility compliant (WCAG 2.1)
+
+💻 TECHNICAL REQUIREMENTS:
+- Single HTML file with embedded CSS and JavaScript
+- Modern CSS3 (Flexbox, Grid, Custom Properties)
+- Vanilla JavaScript (ES6+)
+- Cross-browser compatible
+- Performance optimized
+- SEO-friendly structure
+
+🚀 ADVANCED FEATURES TO INCLUDE:
+- Interactive components
+- Form validation (if applicable)
+- Local storage for user preferences
+- Loading states and error handling
+- Keyboard navigation support
+- Touch/gesture support for mobile
+
+Return ONLY the complete HTML code. Make it look like a professional, modern application that users would actually want to use.`
 }
 
 // Clean HTML result
@@ -283,67 +347,167 @@ function cleanHTMLResult(html) {
   return cleaned.trim()
 }
 
-// Wrap content in MODERATE HTML structure
-function wrapInModerateHTMLStructure(content, type) {
+// 🚀 Wrap content in ADVANCED HTML structure
+function wrapInAdvancedHTMLStructure(content, type) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${type} - MindForge</title>
+  <title>${type} - MindForge AI</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      line-height: 1.6; 
-      color: #333;
-      background: #f5f5f5;
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #f1f5f9;
+      --accent: #06b6d4;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --bg: #ffffff;
+      --bg-alt: #f8fafc;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
-    .container { 
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+      line-height: 1.6; 
+      color: var(--text);
+      background: linear-gradient(135deg, var(--bg-alt) 0%, var(--secondary) 100%);
+      min-height: 100vh;
+    }
+    
+    .mindforge-container { 
       max-width: 1200px; 
       margin: 0 auto; 
       padding: 2rem; 
     }
-    .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    
+    .mindforge-header {
+      text-align: center;
+      margin-bottom: 3rem;
       padding: 2rem;
-      margin: 1rem 0;
+      background: var(--bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
     }
+    
+    .mindforge-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    .mindforge-header p {
+      color: var(--text-light);
+      font-size: 1.1rem;
+    }
+    
+    .mindforge-content {
+      background: var(--bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      padding: 3rem;
+      margin: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .mindforge-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+    
     .btn {
-      background: #007bff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 4px;
+      padding: 1rem 2rem;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
     }
+    
     .btn:hover {
-      background: #0056b3;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
     @media (max-width: 768px) {
-      .container { padding: 1rem; }
-      .card { padding: 1rem; }
+      .mindforge-container { padding: 1rem; }
+      .mindforge-content { padding: 2rem; }
+      .mindforge-header h1 { font-size: 2rem; }
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .mindforge-content {
+      animation: fadeInUp 0.6s ease-out;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
+  <div class="mindforge-container">
+    <div class="mindforge-header">
+      <h1>🚀 ${type} Generated</h1>
+      <p>Powered by Claude Sonnet & MindForge AI</p>
+    </div>
+    <div class="mindforge-content">
       ${content}
     </div>
   </div>
   <script>
-    console.log('${type} created with MindForge AI');
+    console.log('✨ ${type} created with MindForge AI v2.0 + Claude Sonnet');
+    
+    // Add smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
   </script>
 </body>
 </html>`
 }
 
-// Create MODERATE fallback HTML
-function createModerateFallbackHTML(type, prompt) {
+// 🚀 Create ADVANCED fallback HTML
+function createAdvancedFallbackHTML(type, prompt) {
   const templates = {
     Website: `
       <style>
@@ -500,7 +664,7 @@ function createModerateFallbackHTML(type, prompt) {
     ${template}
   </div>
   <script>
-    console.log('${type} created with MindForge AI - Moderate version');
+    console.log('✨ ${type} created with MindForge AI v2.0 - Advanced Fallback');
   </script>
 </body>
 </html>`
