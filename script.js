@@ -327,7 +327,7 @@ document.addEventListener("DOMContentLoaded", function () {
       generateBtn.disabled = false;
       generateBtn.textContent = "✨ Generate";
     }
-  });
+              });
   
   // 📱 Mobile Detection
   function detectMobile() {
