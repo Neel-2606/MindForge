@@ -506,156 +506,11 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayProjectStructure(projectStructure, framework) {
     const { files, setupInstructions, features } = projectStructure;
     
-    // Update preview with project overview
-    previewFrame.srcdoc = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modern ${framework.toUpperCase()} Project Generated</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 2rem;
-      color: white;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      background: rgba(255,255,255,0.1);
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .header h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(45deg, #00fff0, #ff00ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .framework-badge {
-      display: inline-block;
-      background: rgba(0,255,240,0.2);
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
-      border: 1px solid rgba(0,255,240,0.3);
-      margin-bottom: 1rem;
-    }
-    .files-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1rem;
-      margin: 2rem 0;
-    }
-    .file-card {
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 1rem;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .file-name {
-      font-weight: bold;
-      color: #00fff0;
-      margin-bottom: 0.5rem;
-    }
-    .file-preview {
-      background: rgba(0,0,0,0.3);
-      padding: 0.5rem;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.8rem;
-      max-height: 100px;
-      overflow: hidden;
-      white-space: pre-wrap;
-    }
-    .setup-section {
-      background: rgba(0,255,0,0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 2rem 0;
-      border: 1px solid rgba(0,255,0,0.3);
-    }
-    .features-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-    .feature-tag {
-      background: rgba(255,255,255,0.2);
-      padding: 0.3rem 0.8rem;
-      border-radius: 15px;
-      font-size: 0.9rem;
-    }
-    .download-btn {
-      background: linear-gradient(45deg, #00fff0, #ff00ff);
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 25px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1.1rem;
-      margin: 1rem 0.5rem;
-      transition: transform 0.3s ease;
-    }
-    .download-btn:hover {
-      transform: scale(1.05);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🚀 Modern Project Generated!</h1>
-      <div class="framework-badge">${framework.toUpperCase()} Framework</div>
-      <p>Complete project structure with ${Object.keys(files).length} files</p>
-    </div>
-
-    <div class="files-grid">
-      ${Object.entries(files).slice(0, 6).map(([fileName, content]) => `
-        <div class="file-card">
-          <div class="file-name">${fileName}</div>
-          <div class="file-preview">${content.substring(0, 200)}...</div>
-        </div>
-      `).join('')}
-    </div>
-
-    <div class="setup-section">
-      <h3>🔧 Setup Instructions</h3>
-      <p>${setupInstructions}</p>
-      <div class="features-list">
-        ${features.map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
-      </div>
-    </div>
-
-    <div style="text-align: center;">
-      <button class="download-btn" onclick="downloadProject()">📦 Download Project</button>
-      <button class="download-btn" onclick="viewAllFiles()">📁 View All Files</button>
-    </div>
-  </div>
-
-  <script>
-    function downloadProject() {
-      alert('Project download feature coming soon! For now, copy the files from the code view.');
-    }
+    // Create live preview by converting React/Next.js to vanilla HTML
+    const livePreview = createLivePreview(files, framework);
     
-    function viewAllFiles() {
-      parent.postMessage('showAllFiles', '*');
-    }
-  </script>
-</body>
-</html>`;
+    // Update preview with actual rendered application
+    previewFrame.srcdoc = livePreview;
 
     // Update code view with project files
     const allFilesHtml = Object.entries(files).map(([fileName, content]) => `
@@ -672,5 +527,200 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Show success message
     console.log(`✅ Generated modern ${framework} project with ${Object.keys(files).length} files`);
+  }
+
+  // 🎨 Create live preview from React/Next.js files
+  function createLivePreview(files, framework) {
+    // Extract main component content and convert to vanilla HTML
+    const mainComponent = files['src/App.jsx'] || files['pages/index.js'] || files['app/page.tsx'] || '';
+    const stylesContent = files['src/index.css'] || files['styles/globals.css'] || '';
+    
+    // Convert JSX/TSX to HTML by extracting the visual structure
+    let htmlContent = extractHTMLFromComponent(mainComponent);
+    let cssContent = extractCSSFromStyles(stylesContent);
+    
+    // Add Tailwind CSS via CDN for styling
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Preview - ${framework}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/framer-motion@10/dist/framer-motion.js"></script>
+  <style>
+    ${cssContent}
+    
+    /* Additional animations and effects */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out; }
+    .animate-slide-in-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    
+    /* Hover effects */
+    .hover-scale:hover { transform: scale(1.05); transition: transform 0.3s ease; }
+    .hover-glow:hover { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+    
+    /* Gradient backgrounds */
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-text { 
+      background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+  
+  <script>
+    // Add interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animate elements on scroll
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
+      
+      // Observe all sections
+      document.querySelectorAll('section, .card, .feature').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'all 0.6s ease-out';
+        observer.observe(el);
+      });
+      
+      // Add hover effects to buttons and cards
+      document.querySelectorAll('button, .card').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.05)';
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+        });
+      });
+      
+      // Typing animation for hero text
+      const heroTitle = document.querySelector('h1');
+      if (heroTitle && heroTitle.textContent.length > 0) {
+        const text = heroTitle.textContent;
+        heroTitle.textContent = '';
+        let i = 0;
+        const typeWriter = () => {
+          if (i < text.length) {
+            heroTitle.textContent += text.charAt(i);
+            i++;
+            setTimeout(typeWriter, 100);
+          }
+        };
+        setTimeout(typeWriter, 500);
+      }
+    });
+  </script>
+</body>
+</html>`;
+  }
+
+  // Extract HTML structure from React component
+  function extractHTMLFromComponent(componentCode) {
+    if (!componentCode) return '<div class="p-8 text-center"><h1 class="text-4xl font-bold gradient-text">Welcome to Your App</h1></div>';
+    
+    // Remove imports and exports
+    let content = componentCode.replace(/import.*?from.*?;/g, '');
+    content = content.replace(/export.*?{/g, '{');
+    
+    // Extract JSX return statement
+    const returnMatch = content.match(/return\s*\(([\s\S]*?)\);?\s*}/);
+    if (returnMatch) {
+      let jsx = returnMatch[1].trim();
+      
+      // Convert JSX to HTML
+      jsx = jsx.replace(/className=/g, 'class=');
+      jsx = jsx.replace(/\{[^}]*\}/g, (match) => {
+        // Handle simple variable replacements
+        if (match.includes('title') || match.includes('name')) return 'Portfolio';
+        if (match.includes('description')) return 'Full Stack Developer';
+        if (match.includes('email')) return 'contact@example.com';
+        return match.replace(/[{}]/g, '');
+      });
+      
+      // Add animation classes
+      jsx = jsx.replace(/(<div|<section|<header|<main)/g, '$1 class="animate-fade-in-up"');
+      jsx = jsx.replace(/(<h1|<h2|<h3)/g, '$1 class="gradient-text"');
+      jsx = jsx.replace(/(<button)/g, '$1 class="hover-scale hover-glow"');
+      
+      return jsx;
+    }
+    
+    // Fallback: create a basic structure
+    return `
+      <div class="min-h-screen gradient-bg">
+        <header class="p-6 animate-fade-in-up">
+          <nav class="flex justify-between items-center max-w-6xl mx-auto">
+            <h1 class="text-2xl font-bold text-white">Portfolio</h1>
+            <div class="space-x-6">
+              <a href="#" class="text-white hover:text-blue-300">Home</a>
+              <a href="#" class="text-white hover:text-blue-300">About</a>
+              <a href="#" class="text-white hover:text-blue-300">Projects</a>
+              <a href="#" class="text-white hover:text-blue-300">Contact</a>
+            </div>
+          </nav>
+        </header>
+        
+        <main class="max-w-6xl mx-auto px-6 py-20">
+          <section class="text-center mb-20 animate-fade-in-up">
+            <h1 class="text-6xl font-bold gradient-text mb-6">Full Stack Developer</h1>
+            <p class="text-xl text-white/80 mb-8">Creating amazing digital experiences</p>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg hover-scale hover-glow">
+              Get In Touch
+            </button>
+          </section>
+          
+          <section class="grid md:grid-cols-3 gap-8 animate-slide-in-left">
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl hover-scale">
+              <h3 class="text-xl font-bold text-white mb-4">Frontend</h3>
+              <p class="text-white/80">React, Next.js, TypeScript</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl hover-scale">
+              <h3 class="text-xl font-bold text-white mb-4">Backend</h3>
+              <p class="text-white/80">Node.js, Python, PostgreSQL</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl hover-scale">
+              <h3 class="text-xl font-bold text-white mb-4">Design</h3>
+              <p class="text-white/80">Figma, Tailwind CSS, Framer Motion</p>
+            </div>
+          </section>
+        </main>
+      </div>`;
+  }
+
+  // Extract CSS from styles file
+  function extractCSSFromStyles(stylesCode) {
+    if (!stylesCode) return '';
+    
+    // Remove Tailwind imports and keep custom CSS
+    let css = stylesCode.replace(/@import.*?;/g, '');
+    css = css.replace(/@tailwind.*?;/g, '');
+    
+    return css;
   }
 });
