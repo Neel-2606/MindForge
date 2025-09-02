@@ -197,7 +197,16 @@ document.addEventListener("DOMContentLoaded", function () {
       // Handle both project structure and regular code
       let output = data.code || data.fallback;
 
-      if (!output || output.trim().length < 100) {
+      // Handle project structure format
+      if (data.projectStructure && data.projectStructure.files) {
+        // Convert project structure to HTML preview
+        const mainFile = data.projectStructure.files['index.html'] || 
+                        data.projectStructure.files['public/index.html'] ||
+                        createProjectPreview(data.projectStructure, userInput);
+        output = mainFile;
+      }
+
+      if (!output || output.trim().length < 50) {
         output = `
 <!DOCTYPE html>
 <html lang="en">
@@ -401,4 +410,119 @@ document.addEventListener("DOMContentLoaded", function () {
     el.addEventListener("click", btn.onClick);
     toolbar.appendChild(el);
   });
+
+  // Helper function to create project preview from project structure
+  window.createProjectPreview = function(projectStructure, userPrompt) {
+    const framework = projectStructure.framework || 'react';
+    const files = Object.keys(projectStructure.files).slice(0, 5); // Show first 5 files
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Preview - MindForge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #00fff0, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .framework-badge {
+      display: inline-block;
+      background: #00fff0;
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+    .files-list {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .file-item {
+      background: rgba(255,255,255,0.1);
+      padding: 0.75rem 1rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      font-family: 'Monaco', monospace;
+      font-size: 0.9rem;
+    }
+    .instructions {
+      background: rgba(0,255,240,0.1);
+      border: 1px solid rgba(0,255,240,0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .btn {
+      background: #00fff0;
+      color: #000;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0,255,240,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Project Generated!</h1>
+      <p>Your ${framework.toUpperCase()} project is ready</p>
+      <div class="framework-badge">${framework.toUpperCase()} Framework</div>
+    </div>
+    
+    <div class="files-list">
+      <h3>📁 Project Files:</h3>
+      ${files.map(file => `<div class="file-item">📄 ${file}</div>`).join('')}
+      ${Object.keys(projectStructure.files).length > 5 ? `<div class="file-item">... and ${Object.keys(projectStructure.files).length - 5} more files</div>` : ''}
+    </div>
+    
+    <div class="instructions">
+      <h3>🛠️ Setup Instructions:</h3>
+      <p>${projectStructure.setupInstructions || 'Follow the README.md for setup instructions'}</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 2rem;">
+      <button class="btn" onclick="alert('Download feature coming soon!')">💾 Download Project</button>
+      <button class="btn" onclick="window.open('https://github.com/new', '_blank')">🚀 Deploy to GitHub</button>
+    </div>
+  </div>
+</body>
+</html>`;
+  };
 });
