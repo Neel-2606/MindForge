@@ -1602,14 +1602,14 @@ async function callGeminiAPI(prompt, apiKey) {
 // 🚀 Create MODERN FRAMEWORK prompts
 function createAdvancedPrompt(userPrompt, projectType) {
   const frameworkInstructions = {
-    Website: `Create a modern React/Next.js website project with:
-- Multiple component files (Header, Hero, Features, Footer)
-- Tailwind CSS for styling
-- React hooks for state management
-- Responsive design with mobile-first approach
-- Modern animations with Framer Motion
-- TypeScript for type safety
-- API routes for backend functionality`,
+    Website: `Create a modern, single-file HTML website with:
+- Embedded CSS (use Tailwind CSS via CDN)
+- Embedded JavaScript for interactivity
+- Modern, responsive design (glassmorphism, gradients)
+- High-quality UI components (Hero, Features, Testimonials, Footer)
+- Real, professional content (no placeholders)
+- FontAwesome or similar for icons
+- Smooth animations`,
 
     "Mobile App": `Create a React Native or Next.js PWA project with:
 - Component-based architecture
@@ -1657,49 +1657,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - Responsive design with modern UI library`
   }
 
-  return `Create a complete, modern framework project for a ${projectType}.
-
-🎯 PROJECT REQUIREMENTS:
-${frameworkInstructions[projectType]}
-
-📝 USER REQUEST: "${userPrompt}"
-
-🏗️ PROJECT STRUCTURE:
-Generate a complete project with multiple files including:
-- package.json with all necessary dependencies
-- Main application files (App.js/tsx, index.js/tsx)
-- Component files (separate .jsx/.tsx files)
-- Styling files (CSS modules, Tailwind, or styled-components)
-- Configuration files (next.config.js, vite.config.js, etc.)
-- README.md with setup instructions
-
-🎨 MODERN STANDARDS:
-- Use latest React 18+ features (hooks, concurrent features)
-- TypeScript for type safety
-- Modern CSS (Tailwind CSS, CSS-in-JS, or CSS modules)
-- Component composition patterns
-- Custom hooks for logic reuse
-- Error boundaries and loading states
-- Accessibility (ARIA labels, semantic HTML)
-
-💻 TECHNICAL REQUIREMENTS:
-- Modern build tools (Vite, Next.js, or Create React App)
-- ESLint and Prettier configuration
-- Environment variable setup
-- API integration patterns
-- State management (Context API, Zustand, or Redux Toolkit)
-- Routing (React Router or Next.js routing)
-- Performance optimizations (lazy loading, memoization)
-
-🚀 ADVANCED FEATURES:
-- Server-side rendering (if Next.js)
-- Progressive Web App capabilities
-- Real-time features (WebSockets)
-- Database integration patterns
-- Authentication system
-- Testing setup (Jest, React Testing Library)
-- Deployment configuration (Vercel, Netlify)
-
+  const jsonFormatInstruction = `
 Return the response in this JSON format:
 {
   "framework": "react|nextjs|vue|nuxt",
@@ -1712,9 +1670,33 @@ Return the response in this JSON format:
   },
   "setupInstructions": "Step by step setup guide",
   "features": ["list", "of", "implemented", "features"]
-}
+}`;
 
-Make it production-ready with modern best practices, not a basic tutorial project.`
+  const htmlFormatInstruction = `
+Return a SINGLE, COMPLETE HTML file containing everything (HTML, CSS, JS).
+- Use <script src="https://cdn.tailwindcss.com"></script> for styling.
+- Use <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /> for icons.
+- Ensure the code is production-ready and looks beautiful.
+- DO NOT return JSON. Return ONLY the HTML code.
+`;
+
+  return `Create a complete, modern project for a ${projectType}.
+
+🎯 PROJECT REQUIREMENTS:
+${frameworkInstructions[projectType]}
+
+📝 USER REQUEST: "${userPrompt}"
+
+🎨 MODERN STANDARDS:
+- Modern CSS (Tailwind CSS, Glassmorphism)
+- Smooth animations
+- Responsive design
+- Professional typography
+- Accessibility
+
+${projectType === 'Website' ? htmlFormatInstruction : jsonFormatInstruction}
+
+Make it production-ready with modern best practices.`;
 }
 
 // Clean HTML result
