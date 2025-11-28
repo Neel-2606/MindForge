@@ -1,38 +1,46 @@
-export default async function handler(req, res) {
-  // Set CORS headers first
-  res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(req) {
+  // CORS headers
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Content-Type": "application/json"
+  };
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end()
+    return new Response(null, { status: 200, headers });
   }
 
   if (req.method === "GET") {
-    return res.status(200).json({
-      message: "MindForge AI is working with FREE APIs!",
+    return new Response(JSON.stringify({
+      message: "MindForge AI is working with FREE APIs! (Edge Runtime)",
       timestamp: new Date().toISOString(),
       environment: {
         hasOpenRouter: !!process.env.OPENROUTER_API_KEY,
         hasGroq: !!process.env.GROQ_API_KEY,
-        version: "2.1.0",
-        models: ["gemini-2.5-flash (free)", "claude-3.5-sonnet (free)", "llama-3.1-70b (free)"]
+        version: "2.2.0",
+        models: ["gemini-2.0-flash (free)", "claude-3.5-sonnet (free)", "llama-3.1-70b (free)"]
       },
-    })
+    }), { status: 200, headers });
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   }
 
   try {
-    const { prompt, type = "Website" } = req.body || {}
+    const body = await req.json().catch(() => ({}));
+    const { prompt, type = "Website" } = body;
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length < 3) {
-      return res.status(400).json({
+      return new Response(JSON.stringify({
         success: false,
         error: "Prompt must be at least 3 characters long",
-      })
+      }), { status: 400, headers });
     }
 
     // 🔒 ENHANCED MODERATION
@@ -45,10 +53,10 @@ export default async function handler(req, res) {
     const foundBanned = bannedWords.find(word => lowerPrompt.includes(word));
 
     if (foundBanned) {
-      return res.status(400).json({
+      return new Response(JSON.stringify({
         success: false,
         error: `Inappropriate content detected: "${foundBanned}" is not allowed.`,
-      });
+      }), { status: 400, headers });
     }
 
     // Get API keys - prioritize free options
@@ -57,20 +65,20 @@ export default async function handler(req, res) {
     const groqKey = process.env.GROQ_API_KEY
 
     if (!geminiKey && !openRouterKey && !groqKey) {
-      return res.status(200).json({
+      return new Response(JSON.stringify({
         success: true,
         code: createAdvancedFallbackHTML(type, prompt),
         type: type,
         apiUsed: "fallback",
         timestamp: new Date().toISOString(),
         message: "No free API keys configured. Using advanced fallback."
-      })
+      }), { status: 200, headers });
     }
 
     // Create advanced prompt
     const advancedPrompt = createAdvancedPrompt(prompt, type)
 
-    console.log(`Generating ${type} with free AI APIs...`)
+    console.log(`Generating ${type} with free AI APIs (Edge)...`)
 
     let result = null
     let usedAPI = null
@@ -80,7 +88,7 @@ export default async function handler(req, res) {
       try {
         console.log("💎 Trying Google Gemini (Priority 1)...")
         result = await callGeminiAPI(advancedPrompt, geminiKey)
-        if (result) usedAPI = "gemini-2.5-flash"
+        if (result) usedAPI = "gemini-2.0-flash"
       } catch (error) {
         console.log("Google Gemini failed:", error.message)
       }
@@ -145,15 +153,15 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json(finalResponse)
+    return new Response(JSON.stringify(finalResponse), { status: 200, headers });
 
   } catch (error) {
     console.error("General API error:", error)
-    return res.status(500).json({
+    return new Response(JSON.stringify({
       success: false,
       error: "Internal server error",
       details: error.message
-    })
+    }), { status: 500, headers });
   }
 }
 
@@ -349,9 +357,9 @@ async function callGroqAPI(prompt, apiKey) {
 // 💎 FREE Google Gemini API call
 async function callGeminiAPI(prompt, apiKey) {
   const models = [
-    "gemini-2.5-flash",
+    "gemini-2.0-flash", // Fastest model (Priority 1)
+    "gemini-2.5-flash", // Newer but might be slower
     "gemini-2.5-pro",
-    "gemini-2.0-flash",
     "gemini-2.0-pro-exp",
     "gemini-flash-latest"
   ];
