@@ -15,8 +15,8 @@ export default async function handler(req, res) {
       environment: {
         hasOpenRouter: !!process.env.OPENROUTER_API_KEY,
         hasGroq: !!process.env.GROQ_API_KEY,
-        version: "2.0.0",
-        models: ["claude-3.5-sonnet (free)", "llama-3.1-70b (free)"]
+        version: "2.1.0",
+        models: ["gemini-1.5-flash (free)", "claude-3.5-sonnet (free)", "llama-3.1-70b (free)"]
       },
     })
   }
@@ -52,10 +52,11 @@ export default async function handler(req, res) {
     }
 
     // Get API keys - prioritize free options
+    const geminiKey = process.env.GEMINI_API_KEY
     const openRouterKey = process.env.OPENROUTER_API_KEY
     const groqKey = process.env.GROQ_API_KEY
 
-    if (!openRouterKey && !groqKey) {
+    if (!geminiKey && !openRouterKey && !groqKey) {
       return res.status(200).json({
         success: true,
         code: createAdvancedFallbackHTML(type, prompt),
@@ -74,10 +75,21 @@ export default async function handler(req, res) {
     let result = null
     let usedAPI = null
 
-    // 🥇 Priority 1: Claude Sonnet via OpenRouter
+    // 💎 Priority 1: Google Gemini (Best Free Option)
+    if (geminiKey && !result) {
+      try {
+        console.log("💎 Trying Google Gemini (Priority 1)...")
+        result = await callGeminiAPI(advancedPrompt, geminiKey)
+        if (result) usedAPI = "gemini-1.5-flash"
+      } catch (error) {
+        console.log("Google Gemini failed:", error.message)
+      }
+    }
+
+    // 🥇 Priority 2: Claude Sonnet via OpenRouter
     if (openRouterKey && !result) {
       try {
-        console.log("🥇 Trying Claude Sonnet (Priority 1)...")
+        console.log("🥇 Trying Claude Sonnet (Priority 2)...")
         result = await callOpenRouterAPI(advancedPrompt, openRouterKey)
         if (result) usedAPI = "claude-sonnet"
       } catch (error) {
@@ -88,7 +100,7 @@ export default async function handler(req, res) {
     // 🥈 Priority 2: Groq Qwen as backup
     if (groqKey && !result) {
       try {
-        console.log("🥈 Trying Groq Qwen (Priority 2)...")
+        console.log("🥈 Trying Groq Qwen (Priority 3)...")
         result = await callGroqAPI(advancedPrompt, groqKey)
         if (result) usedAPI = "groq-qwen"
       } catch (error) {
@@ -130,9 +142,9 @@ export default async function handler(req, res) {
     // All APIs failed or result too short - return enhanced HTML fallback
     console.log("All free APIs failed or result too short, returning enhanced HTML fallback")
     const fallbackHTML = createAdvancedFallbackHTML(type, prompt)
-    
+
     console.log(`Fallback HTML content length: ${fallbackHTML.length} characters`);
-    
+
     return res.status(200).json({
       success: true,
       code: fallbackHTML,
@@ -191,7 +203,7 @@ function createModernFrameworkFallback(projectType, userPrompt, aiContent = null
   };
 
   const framework = frameworks[projectType] || "react";
-  
+
   const projects = {
     nextjs: createNextJSProject(projectType, userPrompt, aiContent),
     react: createReactProject(projectType, userPrompt, aiContent)
@@ -204,7 +216,7 @@ function createModernFrameworkFallback(projectType, userPrompt, aiContent = null
 function createReactProject(projectType, userPrompt, aiContent) {
   // Enhanced portfolio-specific content for React projects
   const isPortfolio = userPrompt.toLowerCase().includes('portfolio') || projectType.toLowerCase().includes('portfolio');
-  
+
   return {
     framework: "react",
     files: {
@@ -237,7 +249,7 @@ function createReactProject(projectType, userPrompt, aiContent) {
           "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
         }
       }, null, 2),
-      
+
       "public/index.html": `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -1036,7 +1048,7 @@ function createNextJSProject(projectType, userPrompt, aiContent) {
           "eslint-config-next": "14.0.0"
         }
       }, null, 2),
-      
+
       "next.config.js": `/** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -1442,22 +1454,22 @@ Always return complete, production-ready HTML files with embedded CSS and JavaSc
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       const errorMsg = errorData.error?.message || response.statusText
-      
+
       // Handle specific rate limit errors
       if (response.status === 429 || errorMsg.includes('rate limit')) {
         throw new Error(`Rate limit reached. Please wait a few minutes and try again.`)
       }
-      
+
       throw new Error(`OpenRouter API error: ${response.status} - ${errorMsg}`)
     }
 
     const data = await response.json()
     const content = data?.choices?.[0]?.message?.content
-    
+
     if (!content || content.length < 50) {
       throw new Error("API returned empty or too short response")
     }
-    
+
     return content
   } catch (error) {
     console.error("OpenRouter API call failed:", error.message)
@@ -1494,26 +1506,91 @@ async function callGroqAPI(prompt, apiKey) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       const errorMsg = errorData.error?.message || response.statusText
-      
+
       // Handle specific rate limit errors
       if (response.status === 429 || errorMsg.includes('rate limit')) {
         throw new Error(`Rate limit reached. Please wait a few minutes and try again.`)
       }
-      
+
       throw new Error(`Groq API error: ${response.status} - ${errorMsg}`)
     }
 
     const data = await response.json()
     const content = data?.choices?.[0]?.message?.content
-    
+
     if (!content || content.length < 50) {
       throw new Error("API returned empty or too short response")
     }
-    
+
     return content
   } catch (error) {
     console.error("Groq API call failed:", error.message)
     throw error
+  }
+}
+
+// 💎 FREE Google Gemini API call
+async function callGeminiAPI(prompt, apiKey) {
+  const models = [
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-pro",
+    "gemini-1.0-pro"
+  ];
+
+  for (const model of models) {
+    try {
+      console.log(`💎 Trying Gemini model: ${model}...`);
+      // Handle models that need 'models/' prefix in URL vs those that don't
+      // The API expects: /v1beta/models/MODEL_NAME:generateContent
+      // If model name is "gemini-1.5-flash", URL is .../models/gemini-1.5-flash...
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are an expert full-stack developer and UI/UX designer. Create modern, professional, and fully functional web applications.
+              
+              IMPORTANT: Return ONLY the raw code or JSON. Do not include markdown formatting like \`\`\`json or \`\`\`.
+              
+              ${prompt}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 8192,
+          }
+        })
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log(`Model ${model} not found, trying next...`);
+          continue;
+        }
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Gemini API error: ${response.status} - ${JSON.stringify(errorData)}`)
+      }
+
+      const data = await response.json()
+      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+      if (!content || content.length < 50) {
+        throw new Error("API returned empty or too short response")
+      }
+
+      // Clean up markdown code blocks if present
+      return content.replace(/^```(json|javascript|html)?\n/, '').replace(/\n```$/, '')
+
+    } catch (error) {
+      console.error(`Gemini model ${model} failed:`, error.message)
+      // If it's the last model, throw the error
+      if (model === models[models.length - 1]) throw error;
+    }
   }
 }
 
@@ -1528,7 +1605,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - Modern animations with Framer Motion
 - TypeScript for type safety
 - API routes for backend functionality`,
-    
+
     "Mobile App": `Create a React Native or Next.js PWA project with:
 - Component-based architecture
 - Navigation system (React Navigation)
@@ -1537,7 +1614,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - Touch gestures and animations
 - Offline capabilities
 - Push notification setup`,
-    
+
     Game: `Create a React/Vue game project with:
 - Game engine integration (Phaser.js/Three.js)
 - Component-based game objects
@@ -1546,7 +1623,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - Sound system integration
 - Leaderboard with API
 - Responsive game controls`,
-    
+
     "AI Bot": `Create a modern chat application with:
 - React/Vue frontend with real-time updates
 - WebSocket integration
@@ -1555,7 +1632,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - AI API integration
 - Dark/light theme system
 - Progressive Web App features`,
-    
+
     API: `Create a full-stack API project with:
 - Next.js API routes or Express.js backend
 - Frontend documentation site (React/Vue)
@@ -1564,7 +1641,7 @@ function createAdvancedPrompt(userPrompt, projectType) {
 - Database integration (Prisma/MongoDB)
 - Rate limiting and security
 - Interactive API testing interface`,
-    
+
     "AI Tool": `Create a modern AI tool with:
 - React/Vue dashboard interface
 - Real-time data visualization (Chart.js/D3)
