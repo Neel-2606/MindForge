@@ -1532,10 +1532,11 @@ async function callGroqAPI(prompt, apiKey) {
 // 💎 FREE Google Gemini API call
 async function callGeminiAPI(prompt, apiKey) {
   const models = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-pro",
-    "gemini-1.0-pro"
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",
+    "gemini-2.0-pro-exp",
+    "gemini-flash-latest"
   ];
 
   for (const model of models) {
@@ -1555,7 +1556,11 @@ async function callGeminiAPI(prompt, apiKey) {
             parts: [{
               text: `You are an expert full-stack developer and UI/UX designer. Create modern, professional, and fully functional web applications.
               
-              IMPORTANT: Return ONLY the raw code or JSON. Do not include markdown formatting like \`\`\`json or \`\`\`.
+              CRITICAL INSTRUCTIONS:
+              1. Return ONLY the raw code or JSON. Do not include markdown formatting like \`\`\`json or \`\`\`.
+              2. Use MODERN DESIGN: Tailwind CSS, glassmorphism, gradients, and smooth animations.
+              3. NO PLACEHOLDERS: Generate real, creative content. Do not use "Lorem Ipsum" or "Welcome to our website".
+              4. Make it look PREMIUM and professional, like a top-tier startup product.
               
               ${prompt}`
             }]
